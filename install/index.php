@@ -228,7 +228,10 @@ define('INSTALLED', true);";
                         <div class="mb-4">
                             <label class="form-label text-white-50 small uppercase font-black">License Key</label>
                             <input type="text" name="license_key" class="form-control bg-dark text-white border-secondary" placeholder="Enter your license key" required value="<?php echo htmlspecialchars($_POST['license_key'] ?? ''); ?>">
-                            <div class="form-text text-muted">Your license key is verified against domain <code><?php echo htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost'); ?></code>.</div>
+                            <div class="form-text text-muted mt-2">
+                                Don't have a license key? Register your domain <code><?php echo htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost'); ?></code> at
+                                <a href="https://manager.pmhserver.name.ng" target="_blank" class="text-electric-red fw-bold text-decoration-underline me-1">manager.pmhserver.name.ng</a> to get your key.
+                            </div>
                         </div>
                         <button type="submit" name="verify_license" class="btn btn-primary w-100 py-3 uppercase font-condensed fw-bold">Verify License & Proceed</button>
                     </form>
