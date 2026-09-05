@@ -31,7 +31,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_category'])) {
         $stmt->execute([$name, $slug, (int)$_POST['id']]);
         $success = "Taxonomy updated.";
     } else {
-        $stmt = $conn->prepare("INSERT IGNORE INTO categories (name, slug) VALUES (?, ?)");
+        $driver = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $sql = ($driver === 'sqlite') ? "INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)" : "INSERT IGNORE INTO categories (name, slug) VALUES (?, ?)";
+        $stmt = $conn->prepare($sql);
         $stmt->execute([$name, $slug]);
         $success = "New taxonomy registered.";
     }

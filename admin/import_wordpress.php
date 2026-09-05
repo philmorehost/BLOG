@@ -461,6 +461,37 @@ include __DIR__ . '/header.php';
                                     </div>
                                 </div>
 
+                                <!-- Selective Import Controls -->
+                                <div class="card bg-black border-secondary p-3 mb-4">
+                                    <h6 class="font-condensed uppercase text-primary mb-3"><i class="bi bi-sliders me-1"></i>Select Content To Import:</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="import_posts" id="url_import_posts" value="1" checked>
+                                                <label class="form-check-label text-white small font-bold" for="url_import_posts">Posts</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="import_pages" id="url_import_pages" value="1" checked>
+                                                <label class="form-check-label text-white small font-bold" for="url_import_pages">Pages</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="import_categories" id="url_import_categories" value="1" checked>
+                                                <label class="form-check-label text-white small font-bold" for="url_import_categories">Categories</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="download_images" id="url_download_images" value="1" checked>
+                                                <label class="form-check-label text-white small font-bold" for="url_download_images">Featured Images</label>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="card bg-black border-secondary p-3 mb-4">
                                     <h6 class="font-condensed uppercase text-electric-red mb-2"><i class="bi bi-cpu me-1"></i>Direct REST API Engine Features:</h6>
                                     <ul class="small text-white-50 m-0 ps-3">
@@ -484,6 +515,37 @@ include __DIR__ . '/header.php';
                                     <label class="form-label text-white-50 small uppercase font-black">Select WordPress Export XML File (.xml)</label>
                                     <input type="file" name="xml_file" id="xmlFileInput" class="form-control bg-dark text-white border-secondary" accept=".xml" required>
                                     <div class="form-text text-muted">Go to your WordPress Admin -> Tools -> Export -> All Content to download your XML export file.</div>
+                                </div>
+
+                                <!-- Selective Import Controls -->
+                                <div class="card bg-black border-secondary p-3 mb-4">
+                                    <h6 class="font-condensed uppercase text-primary mb-3"><i class="bi bi-sliders me-1"></i>Select Content To Import:</h6>
+                                    <div class="row g-3">
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="import_posts" id="xml_import_posts" value="1" checked>
+                                                <label class="form-check-label text-white small font-bold" for="xml_import_posts">Posts</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="import_pages" id="xml_import_pages" value="1" checked>
+                                                <label class="form-check-label text-white small font-bold" for="xml_import_pages">Pages</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="import_categories" id="xml_import_categories" value="1" checked>
+                                                <label class="form-check-label text-white small font-bold" for="xml_import_categories">Categories</label>
+                                            </div>
+                                        </div>
+                                        <div class="col-md-3">
+                                            <div class="form-check">
+                                                <input class="form-check-input" type="checkbox" name="download_images" id="xml_download_images" value="1" checked>
+                                                <label class="form-check-label text-white small font-bold" for="xml_download_images">Featured Images</label>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <!-- Real-time Upload Progress Bar -->

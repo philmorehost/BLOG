@@ -1,5 +1,15 @@
 <?php
 require_once __DIR__ . '/db.php';
+
+if (!defined('SITE_URL')) {
+    if (isset($_SERVER['HTTP_HOST'])) {
+        $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        define('SITE_URL', $scheme . '://' . $_SERVER['HTTP_HOST']);
+    } else {
+        define('SITE_URL', 'http://localhost');
+    }
+}
+
 require_once __DIR__ . '/social_poster.php';
 
 function get_settings() {

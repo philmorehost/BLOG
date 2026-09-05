@@ -69,64 +69,64 @@ if ($category) {
 
 <div class="container-fluid pt-0 px-0 bg-black overflow-x-hidden">
     <?php if (!$category): ?>
-        <!-- INTELLIGENCE HERO -->
+        <!-- MAIN LANDING HERO GRID -->
         <?php if ($hero): ?>
-        <section class="bg-black border-b border-white/10 overflow-hidden">
-            <div class="container-fluid px-0">
-                <div class="row g-0">
-                    <!-- Main Hero Column -->
-                    <div class="col-lg-8 border-r border-white/10">
-                        <div class="relative h-[60vh] md:h-[85vh] flex items-end">
+        <section class="bg-black border-b border-white/10 py-6">
+            <div class="container-fluid px-4 px-md-8">
+                <div class="row g-4 align-items-stretch">
+                    <!-- Main Hero Lead Article -->
+                    <div class="col-lg-8">
+                        <article class="relative h-100 min-h-[480px] rounded-3xl overflow-hidden border border-white/10 group flex flex-col justify-end bg-[#0a0e17]">
+                            <?php $hero_img = !empty($hero['image']) ? $hero['image'] : '/assets/images/default.jpg'; ?>
                             <div class="absolute inset-0 z-0">
-                                <img src="<?php echo $hero['image']; ?>" class="w-full h-full object-fit-cover opacity-60" alt="<?php echo htmlspecialchars($hero['title']); ?>">
-                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                                <img src="<?php echo $hero_img; ?>" class="w-full h-full object-cover opacity-60 transition-transform duration-700 group-hover:scale-105" alt="<?php echo htmlspecialchars($hero['title']); ?>">
+                                <div class="absolute inset-0 bg-gradient-to-t from-black via-black/50 to-transparent"></div>
                             </div>
 
-                            <div class="px-4 px-md-10 py-10 py-md-15 relative z-10 w-full">
-                                <div class="max-w-3xl">
-                                    <div class="flex items-center gap-3 mb-4">
-                                        <span class="bg-electric-red text-white font-condensed fw-black italic px-4 py-1 uppercase tracking-widest text-xs"><?php echo htmlspecialchars($settings['section_priority_title'] ?? 'Priority Intelligence'); ?></span>
-                                        <span class="text-white/50 font-monospace text-[10px] uppercase tracking-tighter"><?php echo date('H:i:s T', strtotime($hero['publish_date'])); ?></span>
-                                    </div>
-                                    <h1 class="text-4xl md:text-7xl font-condensed fw-black text-white italic uppercase lh-1 mb-6 tracking-tighter">
-                                        <a href="/post/<?php echo $hero['slug']; ?>" class="text-inherit text-decoration-none"><?php echo $hero['title']; ?></a>
-                                    </h1>
-                                    <p class="text-lg text-white/70 font-medium leading-relaxed mb-8 max-w-2xl hidden md:block">
-                                        <?php echo $hero['excerpt']; ?>
-                                    </p>
-                                    <a href="/post/<?php echo $hero['slug']; ?>" class="btn btn-primary rounded-0 font-condensed fw-black italic px-8 py-3 uppercase tracking-widest hover:bg-white hover:text-black transition-all">
-                                        Read Full Report
-                                    </a>
+                            <div class="relative z-10 p-6 p-md-10">
+                                <div class="flex items-center gap-3 mb-4">
+                                    <span class="bg-electric-red text-white font-condensed fw-black italic px-3 py-1 uppercase tracking-widest text-xs rounded"><?php echo htmlspecialchars($settings['section_priority_title'] ?? 'Priority Intelligence'); ?></span>
+                                    <span class="text-white/60 font-monospace text-xs uppercase"><?php echo date('M d, Y // H:i T', strtotime($hero['publish_date'])); ?></span>
                                 </div>
+                                <h1 class="text-3xl md:text-5xl font-condensed fw-black text-white italic uppercase leading-tight mb-4 tracking-tight">
+                                    <a href="/post/<?php echo $hero['slug']; ?>" class="text-inherit text-decoration-none hover:text-electric-red transition-colors"><?php echo $hero['title']; ?></a>
+                                </h1>
+                                <p class="text-sm md:text-base text-white/80 font-medium leading-relaxed mb-6 line-clamp-2 max-w-3xl">
+                                    <?php echo $hero['excerpt']; ?>
+                                </p>
+                                <a href="/post/<?php echo $hero['slug']; ?>" class="inline-flex items-center gap-2 bg-electric-red text-white px-6 py-2.5 rounded-xl font-condensed fw-black italic text-sm uppercase tracking-wider text-decoration-none hover:bg-white hover:text-black transition-all">
+                                    Read Full Story <i class="bi bi-arrow-right"></i>
+                                </a>
                             </div>
-                        </div>
+                        </article>
                     </div>
 
-                    <!-- Hero Sidebar: 4 Latest Reports -->
-                    <div class="col-lg-4 bg-[#0a0e17]">
-                        <div class="h-full flex flex-col">
-                            <div class="p-4 border-b border-white/5 bg-black/40">
-                                <h2 class="text-lg font-condensed fw-black italic text-white uppercase mb-0 tracking-widest flex items-center gap-3">
-                                    <span class="w-1.5 h-4 bg-electric-red"></span>
+                    <!-- Latest News Sidebar Grid -->
+                    <div class="col-lg-4">
+                        <div class="bg-[#0a0e17] rounded-3xl border border-white/10 p-5 h-100 flex flex-col">
+                            <div class="pb-3 mb-4 border-b border-white/10 flex items-center justify-between">
+                                <h2 class="text-lg font-condensed fw-black italic text-white uppercase mb-0 tracking-wider flex items-center gap-2">
+                                    <span class="w-2 h-4 bg-electric-red rounded-sm"></span>
                                     <?php echo htmlspecialchars($settings['section_latest_title'] ?? 'Latest Intelligence'); ?>
                                 </h2>
+                                <span class="badge bg-electric-red/10 text-electric-red border border-electric-red/20 uppercase font-mono text-[10px]">Live Feed</span>
                             </div>
-                            <div class="flex-grow overflow-y-auto no-scrollbar" style="max-height: calc(85vh - 60px);">
-                                <?php foreach ($sidebarNews as $idx => $sn): ?>
-                                    <a href="/post/<?php echo $sn['slug']; ?>" class="block group text-decoration-none border-b border-white/5 p-4 md:p-5 hover:bg-white/5 transition-all">
-                                        <div class="flex gap-4">
-                                            <div class="w-20 h-20 md:w-24 md:h-20 flex-shrink-0 overflow-hidden rounded-xl border border-white/10">
-                                                <img src="<?php echo $sn['image']; ?>" class="w-full h-full object-fit-cover transition-transform duration-500 group-hover:scale-110" alt="<?php echo htmlspecialchars($sn['title']); ?>">
+
+                            <div class="space-y-4 flex-grow">
+                                <?php foreach ($sidebarNews as $sn): ?>
+                                    <?php $sn_img = !empty($sn['image']) ? $sn['image'] : '/assets/images/default.jpg'; ?>
+                                    <a href="/post/<?php echo $sn['slug']; ?>" class="flex gap-4 items-center group text-decoration-none p-2.5 rounded-2xl hover:bg-white/5 transition-all">
+                                        <div class="w-24 h-20 flex-shrink-0 overflow-hidden rounded-xl border border-white/10 relative">
+                                            <img src="<?php echo $sn_img; ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="<?php echo htmlspecialchars($sn['title']); ?>">
+                                        </div>
+                                        <div class="flex-grow min-w-0">
+                                            <div class="flex items-center gap-2 mb-1">
+                                                <span class="text-[9px] font-black uppercase text-electric-red"><?php echo htmlspecialchars($sn['category'] ?? 'General'); ?></span>
+                                                <span class="text-[9px] font-monospace text-white/40">• <?php echo date('H:i', strtotime($sn['publish_date'])); ?></span>
                                             </div>
-                                            <div class="flex-grow">
-                                                <div class="flex items-center gap-2 mb-1.5">
-                                                    <span class="text-[7px] font-black uppercase px-1.5 py-0.5 rounded bg-electric-red/10 text-electric-red border border-electric-red/20"><?php echo $sn['category']; ?></span>
-                                                    <span class="text-[8px] font-monospace text-white/30"><?php echo date('H:i', strtotime($sn['publish_date'])); ?></span>
-                                                </div>
-                                                <h3 class="text-xs md:text-sm font-condensed fw-black italic text-white uppercase group-hover:text-electric-red transition-colors line-clamp-2 leading-tight mb-0">
-                                                    <?php echo $sn['title']; ?>
-                                                </h3>
-                                            </div>
+                                            <h3 class="text-xs md:text-sm font-condensed fw-bold italic text-white uppercase group-hover:text-electric-red transition-colors line-clamp-2 leading-snug mb-0">
+                                                <?php echo $sn['title']; ?>
+                                            </h3>
                                         </div>
                                     </a>
                                 <?php endforeach; ?>
