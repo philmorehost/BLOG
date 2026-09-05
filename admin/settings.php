@@ -26,6 +26,31 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save_general']) || is
     $section_third_cat = sanitize($_POST['section_third_cat'] ?? '');
     $section_fourth_cat = sanitize($_POST['section_fourth_cat'] ?? '');
 
+    $featured_cat1_name = sanitize($_POST['featured_cat1_name'] ?? '');
+    $featured_cat1_title = sanitize($_POST['featured_cat1_title'] ?? '');
+    $featured_cat1_image = sanitize($_POST['featured_cat1_image_url'] ?? ($settings['featured_cat1_image'] ?? ''));
+
+    $featured_cat2_name = sanitize($_POST['featured_cat2_name'] ?? '');
+    $featured_cat2_title = sanitize($_POST['featured_cat2_title'] ?? '');
+    $featured_cat2_image = sanitize($_POST['featured_cat2_image_url'] ?? ($settings['featured_cat2_image'] ?? ''));
+
+    $featured_cat3_name = sanitize($_POST['featured_cat3_name'] ?? '');
+    $featured_cat3_title = sanitize($_POST['featured_cat3_title'] ?? '');
+    $featured_cat3_image = sanitize($_POST['featured_cat3_image_url'] ?? ($settings['featured_cat3_image'] ?? ''));
+
+    $featured_cat4_name = sanitize($_POST['featured_cat4_name'] ?? '');
+    $featured_cat4_title = sanitize($_POST['featured_cat4_title'] ?? '');
+    $featured_cat4_image = sanitize($_POST['featured_cat4_image_url'] ?? ($settings['featured_cat4_image'] ?? ''));
+
+    for ($i = 1; $i <= 4; $i++) {
+        if (isset($_FILES["featured_cat{$i}_file"]) && !empty($_FILES["featured_cat{$i}_file"]['name'])) {
+            $uploaded = upload_image($_FILES["featured_cat{$i}_file"]);
+            if ($uploaded) {
+                ${"featured_cat{$i}_image"} = $uploaded;
+            }
+        }
+    }
+
     $enable_live_feed = isset($_POST['enable_live_feed']) ? 1 : 0;
     $enable_standings = isset($_POST['enable_standings']) ? 1 : 0;
 
@@ -33,8 +58,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save_general']) || is
     $footer_code = $_POST['footer_code'] ?? $settings['footer_code'];
     $footer_about = sanitize($_POST['footer_about'] ?? ($settings['footer_about'] ?? ''));
 
-    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, footer_about = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ?, section_third_title = ?, section_fourth_title = ?, section_primary_cat = ?, section_secondary_cat = ?, section_third_cat = ?, section_fourth_cat = ?, enable_live_feed = ?, enable_standings = ? WHERE id = 1");
-    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $footer_about, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $section_third_title, $section_fourth_title, $section_primary_cat, $section_secondary_cat, $section_third_cat, $section_fourth_cat, $enable_live_feed, $enable_standings]);
+    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, footer_about = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ?, section_third_title = ?, section_fourth_title = ?, section_primary_cat = ?, section_secondary_cat = ?, section_third_cat = ?, section_fourth_cat = ?, featured_cat1_name = ?, featured_cat1_title = ?, featured_cat1_image = ?, featured_cat2_name = ?, featured_cat2_title = ?, featured_cat2_image = ?, featured_cat3_name = ?, featured_cat3_title = ?, featured_cat3_image = ?, featured_cat4_name = ?, featured_cat4_title = ?, featured_cat4_image = ?, enable_live_feed = ?, enable_standings = ? WHERE id = 1");
+    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $footer_about, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $section_third_title, $section_fourth_title, $section_primary_cat, $section_secondary_cat, $section_third_cat, $section_fourth_cat, $featured_cat1_name, $featured_cat1_title, $featured_cat1_image, $featured_cat2_name, $featured_cat2_title, $featured_cat2_image, $featured_cat3_name, $featured_cat3_title, $featured_cat3_image, $featured_cat4_name, $featured_cat4_title, $featured_cat4_image, $enable_live_feed, $enable_standings]);
 
     // Handle Logo Upload
     if (isset($_FILES['logo']) && !empty($_FILES['logo']['name'])) {
@@ -134,7 +159,7 @@ $all_categories = get_categories_with_counts();
 
     <div class="p-5 p-md-5">
         <?php if ($activeTab == 'sections'): ?>
-            <form method="POST" class="space-y-6">
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
                 <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <div class="bg-white/5 p-8 rounded-3xl border border-white/5">
                     <h4 class="text-white font-black uppercase italic mb-6 small text-danger"><i class="bi bi-fonts me-2"></i> Landing Page Category Sections Customization</h4>
@@ -208,6 +233,52 @@ $all_categories = get_categories_with_counts();
                                 <?php endforeach; ?>
                             </select>
                         </div>
+                    </div>
+                </div>
+
+                <!-- Featured Category Cards Settings -->
+                <div class="bg-white/5 p-8 rounded-3xl border border-white/5 mt-8">
+                    <h4 class="text-white font-black uppercase italic mb-6 small text-danger"><i class="bi bi-grid-3x3-gap me-2"></i> Featured Category Cards (Visual Blocks)</h4>
+                    <p class="text-white-50 text-xs mb-6">Configure 4 featured category cards with custom images and titles to display prominently on the landing page.</p>
+                    <div class="row g-4">
+                        <?php for ($i = 1; $i <= 4; $i++): ?>
+                        <div class="col-md-6">
+                            <div class="bg-black/40 p-5 rounded-2xl border border-white/10 h-full">
+                                <h6 class="text-white font-black uppercase italic mb-3 text-sm text-electric-red">Card <?php echo $i; ?></h6>
+
+                                <div class="mb-3">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Target Category</label>
+                                    <select name="featured_cat<?php echo $i; ?>_name" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs font-bold">
+                                        <option value="">-- Select Category --</option>
+                                        <?php foreach ($all_categories as $c): ?>
+                                            <option value="<?php echo htmlspecialchars($c['name']); ?>" <?php echo (($settings["featured_cat{$i}_name"] ?? '') === $c['name']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($c['name']); ?></option>
+                                        <?php endforeach; ?>
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Display Title</label>
+                                    <input type="text" name="featured_cat<?php echo $i; ?>_title" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs font-bold" placeholder="e.g. Start a business" value="<?php echo htmlspecialchars($settings["featured_cat{$i}_title"] ?? ''); ?>">
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Image File Upload</label>
+                                    <input type="file" name="featured_cat<?php echo $i; ?>_file" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs">
+                                </div>
+
+                                <div class="mb-2">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">OR Image URL</label>
+                                    <input type="text" name="featured_cat<?php echo $i; ?>_image_url" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="https://..." value="<?php echo htmlspecialchars($settings["featured_cat{$i}_image"] ?? ''); ?>">
+                                </div>
+
+                                <?php if (!empty($settings["featured_cat{$i}_image"])): ?>
+                                    <div class="mt-3">
+                                        <img src="<?php echo $settings["featured_cat{$i}_image"]; ?>" class="rounded-xl border border-white/10 max-h-28 object-cover">
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                        <?php endfor; ?>
                     </div>
                 </div>
                 <button type="submit" name="save_sections" class="mt-8 bg-danger text-white px-10 py-3 rounded-2xl font-black uppercase italic tracking-widest hover:bg-white hover:text-danger transition-all">Save Section Settings</button>

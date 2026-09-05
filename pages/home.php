@@ -53,6 +53,34 @@ if ($conn) {
 
         }
 
+        // Featured Categories Cards Data
+        $featuredCards = [];
+        for ($i = 1; $i <= 4; $i++) {
+            $cat_name = $settings["featured_cat{$i}_name"] ?? '';
+            $cat_title = !empty($settings["featured_cat{$i}_title"]) ? $settings["featured_cat{$i}_title"] : $cat_name;
+            $cat_image = $settings["featured_cat{$i}_image"] ?? '';
+
+            if (!empty($cat_name) || !empty($cat_title) || !empty($cat_image)) {
+                $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $cat_name)));
+                $featuredCards[] = [
+                    'name' => $cat_name,
+                    'title' => $cat_title,
+                    'image' => $cat_image ?: 'https://images.unsplash.com/photo-1579546929518-9e396f3cc809?auto=format&fit=crop&q=80&w=800',
+                    'url' => !empty($cat_name) ? '/category/' . urlencode($slug) : '#'
+                ];
+            }
+        }
+
+        // Fallback default featured cards if none configured
+        if (empty($featuredCards)) {
+            $featuredCards = [
+                ['title' => 'Start a business', 'image' => 'https://images.unsplash.com/photo-1556761175-5973dc0f32e7?auto=format&fit=crop&q=80&w=800', 'url' => '#'],
+                ['title' => 'Work from home', 'image' => 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&q=80&w=800', 'url' => '#'],
+                ['title' => 'Money making apps', 'image' => 'https://images.unsplash.com/photo-1512941937669-90a1b58e7e9c?auto=format&fit=crop&q=80&w=800', 'url' => '#'],
+                ['title' => 'Make money blogging', 'image' => 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?auto=format&fit=crop&q=80&w=800', 'url' => '#']
+            ];
+        }
+
         // 3. Category Specific Feeds
         $primary_cat = !empty($settings['section_primary_cat']) ? $settings['section_primary_cat'] : 'Football News';
         $secondary_cat = !empty($settings['section_secondary_cat']) ? $settings['section_secondary_cat'] : 'Transfer News';
@@ -169,6 +197,36 @@ if ($category) {
         </section>
         <?php endif; ?>
 
+
+        <!-- FEATURED CATEGORY CARDS SECTION -->
+        <?php if (!empty($featuredCards)): ?>
+        <section class="py-12 bg-black border-b border-white/10">
+            <div class="container-fluid px-4 px-md-8">
+                <div class="row g-6">
+                    <?php foreach ($featuredCards as $card): ?>
+                        <div class="col-6 col-lg-3">
+                            <a href="<?php echo $card['url']; ?>" class="group block text-decoration-none h-full">
+                                <div class="bg-[#181818] rounded-3xl p-4 md:p-6 border border-white/10 transition-all duration-300 group-hover:border-electric-red/50 group-hover:translate-y-[-4px] flex flex-col justify-between h-full shadow-2xl">
+                                    <div class="aspect-[4/3] rounded-2xl overflow-hidden mb-6 bg-white/5 border border-white/10 flex items-center justify-center">
+                                        <img src="<?php echo $card['image']; ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" alt="<?php echo htmlspecialchars($card['title']); ?>">
+                                    </div>
+                                    <div>
+                                        <h3 class="text-white text-lg md:text-2xl font-bold tracking-tight mb-4 group-hover:text-electric-red transition-colors leading-snug">
+                                            <?php echo htmlspecialchars($card['title']); ?>
+                                        </h3>
+                                        <div class="inline-flex items-center gap-2 text-white font-bold text-sm group-hover:text-electric-red transition-colors">
+                                            <span>Read more</span>
+                                            <i class="bi bi-chevron-right text-xs"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </a>
+                        </div>
+                    <?php endforeach; ?>
+                </div>
+            </div>
+        </section>
+        <?php endif; ?>
 
         <!-- SPECIALIZED SECTIONS -->
         <section class="py-20 bg-[#05070a] border-y border-white/5">
