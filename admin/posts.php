@@ -11,6 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 if (isset($_GET['delete'])) {
     $stmt = $conn->prepare("DELETE FROM posts WHERE id = ?");
     $stmt->execute([(int)$_GET['delete']]);
+    update_sitemap();
     $success = "Report decommissioned.";
 }
 
@@ -24,6 +25,7 @@ if (isset($_POST['bulk_delete']) && !empty($_POST['selected_posts'])) {
         $placeholders = implode(',', array_fill(0, count($ids), '?'));
         $stmt = $conn->prepare("DELETE FROM posts WHERE id IN ($placeholders)");
         $stmt->execute($ids);
+        update_sitemap();
         $success = count($ids) . " reports decommissioned in bulk.";
     }
 }
@@ -100,6 +102,7 @@ if (isset($_POST['update_manual'])) {
 
     $stmt = $conn->prepare("UPDATE posts SET title = ?, excerpt = ?, content = ?, category = ?, author = ?, image = ?, video_url = ?, is_scheduled = ?, publish_date = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_top_story = ? WHERE id = ?");
     if ($stmt->execute([$title, $excerpt, $content, $cat, $author, $image, $video_url, $is_scheduled, $publish_date, $tags, $meta_title, $meta_desc, $meta_keys, $is_top, $id])) {
+        update_sitemap();
         $success = "Report updated successfully.";
     } else {
         $error = "Failed to update report.";

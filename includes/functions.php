@@ -195,6 +195,7 @@ function auto_update_database() {
             'site_settings' => [
                 'header_code TEXT',
                 'footer_code TEXT',
+                'footer_about TEXT',
                 'taxonomy_migrated BOOLEAN DEFAULT FALSE',
                 'theme VARCHAR(50) DEFAULT \'news\'',
                 'section_priority_title VARCHAR(255) DEFAULT \'Priority Intelligence\'',

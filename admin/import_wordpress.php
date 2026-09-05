@@ -396,6 +396,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['xml_file'])) {
                 }
 
                 update_sitemap();
+            update_sitemap();
+            update_sitemap();
                 $message = "XML File Import Completed! Successfully imported $imported_count posts/pages, $imported_cats categories, and $imported_media media files.";
             }
         } catch (Exception $ex) {

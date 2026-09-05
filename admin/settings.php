@@ -26,14 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save_general']) || is
     $section_third_cat = sanitize($_POST['section_third_cat'] ?? '');
     $section_fourth_cat = sanitize($_POST['section_fourth_cat'] ?? '');
 
-    $enable_live_feed = isset($_POST['enable_live_feed']) ? 1 : ($settings['enable_live_feed'] ?? 1);
-    $enable_standings = isset($_POST['enable_standings']) ? 1 : ($settings['enable_standings'] ?? 1);
+    $enable_live_feed = isset($_POST['enable_live_feed']) ? 1 : 0;
+    $enable_standings = isset($_POST['enable_standings']) ? 1 : 0;
 
     $header_code = $_POST['header_code'] ?? $settings['header_code'];
     $footer_code = $_POST['footer_code'] ?? $settings['footer_code'];
+    $footer_about = sanitize($_POST['footer_about'] ?? ($settings['footer_about'] ?? ''));
 
-    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ?, section_third_title = ?, section_fourth_title = ?, section_primary_cat = ?, section_secondary_cat = ?, section_third_cat = ?, section_fourth_cat = ?, enable_live_feed = ?, enable_standings = ? WHERE id = 1");
-    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $section_third_title, $section_fourth_title, $section_primary_cat, $section_secondary_cat, $section_third_cat, $section_fourth_cat, $enable_live_feed, $enable_standings]);
+    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, footer_about = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ?, section_third_title = ?, section_fourth_title = ?, section_primary_cat = ?, section_secondary_cat = ?, section_third_cat = ?, section_fourth_cat = ?, enable_live_feed = ?, enable_standings = ? WHERE id = 1");
+    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $footer_about, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $section_third_title, $section_fourth_title, $section_primary_cat, $section_secondary_cat, $section_third_cat, $section_fourth_cat, $enable_live_feed, $enable_standings]);
 
     // Handle Logo Upload
     $logo_path = upload_image($_FILES['logo']);
@@ -278,6 +279,10 @@ $all_categories = get_categories_with_counts();
                         </div>
                     </div>
 
+                    <div class="col-12">
+                        <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Footer Description / About Text</label>
+                        <textarea name="footer_about" rows="3" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold" placeholder="The world's most advanced football intelligence network..."><?php echo htmlspecialchars($settings['footer_about'] ?? 'The world\'s most advanced football intelligence network. Real-time decryption of global sports data and tactical analysis.'); ?></textarea>
+                    </div>
                     <div class="col-12">
                         <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Custom Header Code (JS/CSS/Meta)</label>
                         <textarea name="header_code" rows="5" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-mono text-sm" placeholder="Paste code here to appear in <head>"><?php echo htmlspecialchars($settings['header_code'] ?? ''); ?></textarea>

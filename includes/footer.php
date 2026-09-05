@@ -26,7 +26,7 @@
             <div class="row g-5">
                 <div class="col-lg-4">
                     <h3 class="font-condensed fw-black italic text-white mb-4 fs-4"><?php echo format_site_title($settings['name'] ?? 'FootballIntelligence'); ?></h3>
-                    <p class="text-white-50 small leading-relaxed max-w-sm">The world's most advanced football intelligence network. Real-time decryption of global sports data and tactical analysis.</p>
+                    <p class="text-white-50 small leading-relaxed max-w-sm"><?php echo htmlspecialchars($settings['footer_about'] ?? "The world's most advanced football intelligence network. Real-time decryption of global sports data and tactical analysis."); ?></p>
                 </div>
                 <div class="col-lg-4">
                     <h4 class="font-condensed fw-black text-electric-red mb-3 small tracking-widest">STAY UPDATED</h4>
@@ -42,10 +42,10 @@
                             <h4 class="font-condensed fw-black text-electric-red mb-3 small tracking-widest">CHANNELS</h4>
                             <ul class="list-unstyled small font-bold text-white-50 uppercase">
                                 <li class="mb-2"><a href="/" class="text-decoration-none text-reset hover:text-white transition-all">Latest Reports</a></li>
-                                <?php if ($settings['enable_live_feed'] ?? 1): ?>
+                                <?php if (!empty($settings['enable_live_feed'])): ?>
                                 <li class="mb-2"><a href="/watch" class="text-decoration-none text-reset hover:text-white transition-all">Live Feed</a></li>
                                 <?php endif; ?>
-                                <?php if ($settings['enable_standings'] ?? 1): ?>
+                                <?php if (!empty($settings['enable_standings'])): ?>
                                 <li class="mb-2"><a href="/tables" class="text-decoration-none text-reset hover:text-white transition-all">Standings</a></li>
                                 <?php endif; ?>
                             </ul>

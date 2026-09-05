@@ -52,7 +52,7 @@ if ($path == '/' || $path == '' || empty($path)) {
     include __DIR__ . '/pages/author.php';
 } elseif ($path == '/watch') {
     $settings = get_settings();
-    if (!($settings['enable_live_feed'] ?? 1)) {
+    if (empty($settings['enable_live_feed'])) {
         if (!headers_sent()) http_response_code(404);
         include __DIR__ . '/pages/404.php';
     } else {
@@ -62,7 +62,7 @@ if ($path == '/' || $path == '' || empty($path)) {
     include __DIR__ . '/pages/betting.php';
 } elseif ($path == '/tables' || $path == '/standings') {
     $settings = get_settings();
-    if (!($settings['enable_standings'] ?? 1)) {
+    if (empty($settings['enable_standings'])) {
         if (!headers_sent()) http_response_code(404);
         include __DIR__ . '/pages/404.php';
     } else {
