@@ -198,6 +198,98 @@ if ($category) {
         <?php endif; ?>
 
 
+        <!-- CUSTOM BANNER SECTION 1 (Text Left, Image Right) -->
+        <?php
+        $sec1_title = !empty($settings['banner_sec1_title']) ? $settings['banner_sec1_title'] : 'Turn Your Income Goals Into Action';
+        $sec1_text = !empty($settings['banner_sec1_text']) ? $settings['banner_sec1_text'] : '"Discover practical ideas, trusted resources and step-by-step guides designed to help you earn more, save smarter and build a stronger financial future."';
+        $sec1_image = !empty($settings['banner_sec1_image']) ? $settings['banner_sec1_image'] : 'https://images.unsplash.com/photo-1553729459-efe14ef6055d?auto=format&fit=crop&q=80&w=1200';
+        $sec1_btn1_text = !empty($settings['banner_sec1_btn1_text']) ? $settings['banner_sec1_btn1_text'] : 'Make extra money';
+        $sec1_btn1_url = !empty($settings['banner_sec1_btn1_url']) ? $settings['banner_sec1_btn1_url'] : '#';
+        $sec1_btn2_text = !empty($settings['banner_sec1_btn2_text']) ? $settings['banner_sec1_btn2_text'] : 'Find your next job';
+        $sec1_btn2_url = !empty($settings['banner_sec1_btn2_url']) ? $settings['banner_sec1_btn2_url'] : '#';
+        ?>
+        <section class="py-16 bg-[#080c14] border-b border-white/10">
+            <div class="container-fluid px-4 px-md-10">
+                <div class="row align-items-center g-8">
+                    <!-- Left: Text Content -->
+                    <div class="col-lg-6">
+                        <div class="max-w-2xl">
+                            <h2 class="text-4xl md:text-6xl font-condensed fw-black text-white uppercase italic tracking-tight leading-tight mb-6">
+                                <?php echo htmlspecialchars($sec1_title); ?>
+                            </h2>
+                            <p class="text-white/80 text-base md:text-lg leading-relaxed mb-8 italic">
+                                <?php echo htmlspecialchars($sec1_text); ?>
+                            </p>
+                            <div class="flex flex-wrap gap-4">
+                                <?php if (!empty($sec1_btn1_text)): ?>
+                                    <a href="<?php echo htmlspecialchars($sec1_btn1_url); ?>" class="inline-flex items-center gap-2 bg-transparent border-2 border-white/20 hover:border-electric-red text-white hover:text-electric-red px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider text-decoration-none transition-all">
+                                        <span>💸</span> <?php echo htmlspecialchars($sec1_btn1_text); ?>
+                                    </a>
+                                <?php endif; ?>
+                                <?php if (!empty($sec1_btn2_text)): ?>
+                                    <a href="<?php echo htmlspecialchars($sec1_btn2_url); ?>" class="inline-flex items-center gap-2 bg-transparent border-2 border-white/20 hover:border-electric-red text-white hover:text-electric-red px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider text-decoration-none transition-all">
+                                        <span>🔍</span> <?php echo htmlspecialchars($sec1_btn2_text); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Right: Image -->
+                    <div class="col-lg-6">
+                        <div class="rounded-3xl overflow-hidden border border-white/10 bg-white/5 shadow-2xl aspect-[16/10] relative">
+                            <img src="<?php echo htmlspecialchars($sec1_image); ?>" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($sec1_title); ?>">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CUSTOM BANNER SECTION 2 (Image Left, Text Right) -->
+        <?php
+        $sec2_title = !empty($settings['banner_sec2_title']) ? $settings['banner_sec2_title'] : 'Build Your Strategic Intelligence';
+        $sec2_text = !empty($settings['banner_sec2_text']) ? $settings['banner_sec2_text'] : '"Gain unmitigated access to deep tactical breakdowns, transfer market intelligence, and verified global sports metrics."';
+        $sec2_image = !empty($settings['banner_sec2_image']) ? $settings['banner_sec2_image'] : 'https://images.unsplash.com/photo-1508098682722-e99c43a406b2?auto=format&fit=crop&q=80&w=1200';
+        $sec2_btn1_text = !empty($settings['banner_sec2_btn1_text']) ? $settings['banner_sec2_btn1_text'] : 'Explore Reports';
+        $sec2_btn1_url = !empty($settings['banner_sec2_btn1_url']) ? $settings['banner_sec2_btn1_url'] : '#';
+        $sec2_btn2_text = !empty($settings['banner_sec2_btn2_text']) ? $settings['banner_sec2_btn2_text'] : 'Join Network';
+        $sec2_btn2_url = !empty($settings['banner_sec2_btn2_url']) ? $settings['banner_sec2_btn2_url'] : '#';
+        ?>
+        <section class="py-16 bg-[#030508] border-b border-white/10">
+            <div class="container-fluid px-4 px-md-10">
+                <div class="row align-items-center g-8 flex-column-reverse flex-lg-row">
+                    <!-- Left: Image -->
+                    <div class="col-lg-6">
+                        <div class="rounded-3xl overflow-hidden border border-white/10 bg-white/5 shadow-2xl aspect-[16/10] relative">
+                            <img src="<?php echo htmlspecialchars($sec2_image); ?>" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($sec2_title); ?>">
+                        </div>
+                    </div>
+                    <!-- Right: Text Content -->
+                    <div class="col-lg-6">
+                        <div class="max-w-2xl">
+                            <h2 class="text-4xl md:text-6xl font-condensed fw-black text-white uppercase italic tracking-tight leading-tight mb-6">
+                                <?php echo htmlspecialchars($sec2_title); ?>
+                            </h2>
+                            <p class="text-white/80 text-base md:text-lg leading-relaxed mb-8 italic">
+                                <?php echo htmlspecialchars($sec2_text); ?>
+                            </p>
+                            <div class="flex flex-wrap gap-4">
+                                <?php if (!empty($sec2_btn1_text)): ?>
+                                    <a href="<?php echo htmlspecialchars($sec2_btn1_url); ?>" class="inline-flex items-center gap-2 bg-electric-red text-white hover:bg-white hover:text-black px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider text-decoration-none transition-all">
+                                        ⚡ <?php echo htmlspecialchars($sec2_btn1_text); ?>
+                                    </a>
+                                <?php endif; ?>
+                                <?php if (!empty($sec2_btn2_text)): ?>
+                                    <a href="<?php echo htmlspecialchars($sec2_btn2_url); ?>" class="inline-flex items-center gap-2 bg-transparent border-2 border-white/20 hover:border-electric-red text-white hover:text-electric-red px-6 py-3 rounded-2xl font-bold text-sm uppercase tracking-wider text-decoration-none transition-all">
+                                        🌐 <?php echo htmlspecialchars($sec2_btn2_text); ?>
+                                    </a>
+                                <?php endif; ?>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
         <!-- FEATURED CATEGORY CARDS SECTION -->
         <?php if (!empty($featuredCards)): ?>
         <section class="py-12 bg-black border-b border-white/10">

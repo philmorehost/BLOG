@@ -51,6 +51,32 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save_general']) || is
         }
     }
 
+    // Banner Section 1 inputs
+    $banner_sec1_title = sanitize($_POST['banner_sec1_title'] ?? ($settings['banner_sec1_title'] ?? ''));
+    $banner_sec1_text = sanitize($_POST['banner_sec1_text'] ?? ($settings['banner_sec1_text'] ?? ''));
+    $banner_sec1_image = sanitize($_POST['banner_sec1_image_url'] ?? ($settings['banner_sec1_image'] ?? ''));
+    if (isset($_FILES['banner_sec1_file']) && !empty($_FILES['banner_sec1_file']['name'])) {
+        $uploaded = upload_image($_FILES['banner_sec1_file']);
+        if ($uploaded) $banner_sec1_image = $uploaded;
+    }
+    $banner_sec1_btn1_text = sanitize($_POST['banner_sec1_btn1_text'] ?? ($settings['banner_sec1_btn1_text'] ?? ''));
+    $banner_sec1_btn1_url = sanitize($_POST['banner_sec1_btn1_url'] ?? ($settings['banner_sec1_btn1_url'] ?? ''));
+    $banner_sec1_btn2_text = sanitize($_POST['banner_sec1_btn2_text'] ?? ($settings['banner_sec1_btn2_text'] ?? ''));
+    $banner_sec1_btn2_url = sanitize($_POST['banner_sec1_btn2_url'] ?? ($settings['banner_sec1_btn2_url'] ?? ''));
+
+    // Banner Section 2 inputs
+    $banner_sec2_title = sanitize($_POST['banner_sec2_title'] ?? ($settings['banner_sec2_title'] ?? ''));
+    $banner_sec2_text = sanitize($_POST['banner_sec2_text'] ?? ($settings['banner_sec2_text'] ?? ''));
+    $banner_sec2_image = sanitize($_POST['banner_sec2_image_url'] ?? ($settings['banner_sec2_image'] ?? ''));
+    if (isset($_FILES['banner_sec2_file']) && !empty($_FILES['banner_sec2_file']['name'])) {
+        $uploaded = upload_image($_FILES['banner_sec2_file']);
+        if ($uploaded) $banner_sec2_image = $uploaded;
+    }
+    $banner_sec2_btn1_text = sanitize($_POST['banner_sec2_btn1_text'] ?? ($settings['banner_sec2_btn1_text'] ?? ''));
+    $banner_sec2_btn1_url = sanitize($_POST['banner_sec2_btn1_url'] ?? ($settings['banner_sec2_btn1_url'] ?? ''));
+    $banner_sec2_btn2_text = sanitize($_POST['banner_sec2_btn2_text'] ?? ($settings['banner_sec2_btn2_text'] ?? ''));
+    $banner_sec2_btn2_url = sanitize($_POST['banner_sec2_btn2_url'] ?? ($settings['banner_sec2_btn2_url'] ?? ''));
+
     $enable_live_feed = isset($_POST['enable_live_feed']) ? 1 : 0;
     $enable_standings = isset($_POST['enable_standings']) ? 1 : 0;
 
@@ -58,8 +84,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save_general']) || is
     $footer_code = $_POST['footer_code'] ?? $settings['footer_code'];
     $footer_about = sanitize($_POST['footer_about'] ?? ($settings['footer_about'] ?? ''));
 
-    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, footer_about = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ?, section_third_title = ?, section_fourth_title = ?, section_primary_cat = ?, section_secondary_cat = ?, section_third_cat = ?, section_fourth_cat = ?, featured_cat1_name = ?, featured_cat1_title = ?, featured_cat1_image = ?, featured_cat2_name = ?, featured_cat2_title = ?, featured_cat2_image = ?, featured_cat3_name = ?, featured_cat3_title = ?, featured_cat3_image = ?, featured_cat4_name = ?, featured_cat4_title = ?, featured_cat4_image = ?, enable_live_feed = ?, enable_standings = ? WHERE id = 1");
-    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $footer_about, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $section_third_title, $section_fourth_title, $section_primary_cat, $section_secondary_cat, $section_third_cat, $section_fourth_cat, $featured_cat1_name, $featured_cat1_title, $featured_cat1_image, $featured_cat2_name, $featured_cat2_title, $featured_cat2_image, $featured_cat3_name, $featured_cat3_title, $featured_cat3_image, $featured_cat4_name, $featured_cat4_title, $featured_cat4_image, $enable_live_feed, $enable_standings]);
+    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, footer_about = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ?, section_third_title = ?, section_fourth_title = ?, section_primary_cat = ?, section_secondary_cat = ?, section_third_cat = ?, section_fourth_cat = ?, featured_cat1_name = ?, featured_cat1_title = ?, featured_cat1_image = ?, featured_cat2_name = ?, featured_cat2_title = ?, featured_cat2_image = ?, featured_cat3_name = ?, featured_cat3_title = ?, featured_cat3_image = ?, featured_cat4_name = ?, featured_cat4_title = ?, featured_cat4_image = ?, enable_live_feed = ?, enable_standings = ?, banner_sec1_title = ?, banner_sec1_text = ?, banner_sec1_image = ?, banner_sec1_btn1_text = ?, banner_sec1_btn1_url = ?, banner_sec1_btn2_text = ?, banner_sec1_btn2_url = ?, banner_sec2_title = ?, banner_sec2_text = ?, banner_sec2_image = ?, banner_sec2_btn1_text = ?, banner_sec2_btn1_url = ?, banner_sec2_btn2_text = ?, banner_sec2_btn2_url = ? WHERE id = 1");
+    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $footer_about, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $section_third_title, $section_fourth_title, $section_primary_cat, $section_secondary_cat, $section_third_cat, $section_fourth_cat, $featured_cat1_name, $featured_cat1_title, $featured_cat1_image, $featured_cat2_name, $featured_cat2_title, $featured_cat2_image, $featured_cat3_name, $featured_cat3_title, $featured_cat3_image, $featured_cat4_name, $featured_cat4_title, $featured_cat4_image, $enable_live_feed, $enable_standings, $banner_sec1_title, $banner_sec1_text, $banner_sec1_image, $banner_sec1_btn1_text, $banner_sec1_btn1_url, $banner_sec1_btn2_text, $banner_sec1_btn2_url, $banner_sec2_title, $banner_sec2_text, $banner_sec2_image, $banner_sec2_btn1_text, $banner_sec2_btn1_url, $banner_sec2_btn2_text, $banner_sec2_btn2_url]);
 
     // Handle Logo Upload
     if (isset($_FILES['logo']) && !empty($_FILES['logo']['name'])) {
@@ -232,6 +258,118 @@ $all_categories = get_categories_with_counts();
                                     <option value="<?php echo htmlspecialchars($c['name']); ?>" <?php echo (($settings['section_fourth_cat'] ?? '') === $c['name']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($c['name']); ?></option>
                                 <?php endforeach; ?>
                             </select>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Custom Landing Page Banner Sections -->
+                <div class="bg-white/5 p-8 rounded-3xl border border-white/5 mt-8">
+                    <h4 class="text-white font-black uppercase italic mb-6 small text-danger"><i class="bi bi-layout-split me-2"></i> Custom Landing Page Banner Sections</h4>
+                    <p class="text-white-50 text-xs mb-6">Configure 2 customizable article banner sections displayed on the home page below the hero grid.</p>
+
+                    <div class="row g-6">
+                        <!-- Section 1: Text Left, Image Right -->
+                        <div class="col-lg-6">
+                            <div class="bg-black/40 p-6 rounded-2xl border border-white/10 h-full">
+                                <h5 class="text-white font-black uppercase italic mb-4 text-sm text-electric-red"><i class="bi bi-card-text me-2"></i> Section 1 (Text Left, Image Right)</h5>
+
+                                <div class="mb-4">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Headline / Title</label>
+                                    <input type="text" name="banner_sec1_title" class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white font-bold text-sm" placeholder="e.g. Turn Your Income Goals Into Action" value="<?php echo htmlspecialchars($settings['banner_sec1_title'] ?? ''); ?>">
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Article / Description Text</label>
+                                    <textarea name="banner_sec1_text" rows="3" class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-xs leading-relaxed" placeholder="e.g. Discover practical ideas, trusted resources and step-by-step guides..."><?php echo htmlspecialchars($settings['banner_sec1_text'] ?? ''); ?></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Image Upload</label>
+                                    <input type="file" name="banner_sec1_file" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs">
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">OR Image URL</label>
+                                    <input type="text" name="banner_sec1_image_url" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="https://..." value="<?php echo htmlspecialchars($settings['banner_sec1_image'] ?? ''); ?>">
+                                </div>
+
+                                <?php if (!empty($settings['banner_sec1_image'])): ?>
+                                    <div class="mb-4">
+                                        <img src="<?php echo $settings['banner_sec1_image']; ?>" class="rounded-xl border border-white/10 max-h-32 object-cover">
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Button 1 Label</label>
+                                        <input type="text" name="banner_sec1_btn1_text" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="e.g. Make extra money" value="<?php echo htmlspecialchars($settings['banner_sec1_btn1_text'] ?? ''); ?>">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Button 1 Target URL / Link</label>
+                                        <input type="text" name="banner_sec1_btn1_url" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="e.g. /category/business or https://..." value="<?php echo htmlspecialchars($settings['banner_sec1_btn1_url'] ?? ''); ?>">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Button 2 Label</label>
+                                        <input type="text" name="banner_sec1_btn2_text" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="e.g. Find your next job" value="<?php echo htmlspecialchars($settings['banner_sec1_btn2_text'] ?? ''); ?>">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Button 2 Target URL / Link</label>
+                                        <input type="text" name="banner_sec1_btn2_url" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="e.g. /category/careers or https://..." value="<?php echo htmlspecialchars($settings['banner_sec1_btn2_url'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Section 2: Image Left, Text Right -->
+                        <div class="col-lg-6">
+                            <div class="bg-black/40 p-6 rounded-2xl border border-white/10 h-full">
+                                <h5 class="text-white font-black uppercase italic mb-4 text-sm text-electric-red"><i class="bi bi-card-text me-2"></i> Section 2 (Image Left, Text Right)</h5>
+
+                                <div class="mb-4">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Headline / Title</label>
+                                    <input type="text" name="banner_sec2_title" class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white font-bold text-sm" placeholder="e.g. Build Your Strategic Vision" value="<?php echo htmlspecialchars($settings['banner_sec2_title'] ?? ''); ?>">
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Article / Description Text</label>
+                                    <textarea name="banner_sec2_text" rows="3" class="w-full bg-black border border-white/10 rounded-xl px-4 py-3 text-white text-xs leading-relaxed" placeholder="e.g. Explore tactical deep dives and real-time market movements..."><?php echo htmlspecialchars($settings['banner_sec2_text'] ?? ''); ?></textarea>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Image Upload</label>
+                                    <input type="file" name="banner_sec2_file" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs">
+                                </div>
+
+                                <div class="mb-4">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">OR Image URL</label>
+                                    <input type="text" name="banner_sec2_image_url" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="https://..." value="<?php echo htmlspecialchars($settings['banner_sec2_image'] ?? ''); ?>">
+                                </div>
+
+                                <?php if (!empty($settings['banner_sec2_image'])): ?>
+                                    <div class="mb-4">
+                                        <img src="<?php echo $settings['banner_sec2_image']; ?>" class="rounded-xl border border-white/10 max-h-32 object-cover">
+                                    </div>
+                                <?php endif; ?>
+
+                                <div class="row g-3">
+                                    <div class="col-6">
+                                        <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Button 1 Label</label>
+                                        <input type="text" name="banner_sec2_btn1_text" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="e.g. Explore Reports" value="<?php echo htmlspecialchars($settings['banner_sec2_btn1_text'] ?? ''); ?>">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Button 1 Target URL / Link</label>
+                                        <input type="text" name="banner_sec2_btn1_url" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="e.g. /category/analysis or https://..." value="<?php echo htmlspecialchars($settings['banner_sec2_btn1_url'] ?? ''); ?>">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Button 2 Label</label>
+                                        <input type="text" name="banner_sec2_btn2_text" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="e.g. Join Network" value="<?php echo htmlspecialchars($settings['banner_sec2_btn2_text'] ?? ''); ?>">
+                                    </div>
+                                    <div class="col-6">
+                                        <label class="block text-[10px] font-black uppercase text-gray-500 mb-1">Button 2 Target URL / Link</label>
+                                        <input type="text" name="banner_sec2_btn2_url" class="w-full bg-black border border-white/10 rounded-xl px-3 py-2 text-white text-xs" placeholder="e.g. /about-us or https://..." value="<?php echo htmlspecialchars($settings['banner_sec2_btn2_url'] ?? ''); ?>">
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
