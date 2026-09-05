@@ -37,15 +37,19 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save_general']) || is
     $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $footer_about, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $section_third_title, $section_fourth_title, $section_primary_cat, $section_secondary_cat, $section_third_cat, $section_fourth_cat, $enable_live_feed, $enable_standings]);
 
     // Handle Logo Upload
-    $logo_path = upload_image($_FILES['logo']);
-    if ($logo_path) {
-        $conn->prepare("UPDATE site_settings SET logo = ? WHERE id = 1")->execute([$logo_path]);
+    if (isset($_FILES['logo']) && !empty($_FILES['logo']['name'])) {
+        $logo_path = upload_image($_FILES['logo']);
+        if ($logo_path) {
+            $conn->prepare("UPDATE site_settings SET logo = ? WHERE id = 1")->execute([$logo_path]);
+        }
     }
 
     // Handle Favicon Upload
-    $favicon_path = upload_image($_FILES['favicon']);
-    if ($favicon_path) {
-        $conn->prepare("UPDATE site_settings SET favicon = ? WHERE id = 1")->execute([$favicon_path]);
+    if (isset($_FILES['favicon']) && !empty($_FILES['favicon']['name'])) {
+        $favicon_path = upload_image($_FILES['favicon']);
+        if ($favicon_path) {
+            $conn->prepare("UPDATE site_settings SET favicon = ? WHERE id = 1")->execute([$favicon_path]);
+        }
     }
 
     $success = "General settings synchronized.";

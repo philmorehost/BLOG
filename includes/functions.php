@@ -840,7 +840,7 @@ function fetch_image($url) {
  * @return string|false Path to uploaded file relative to root, or false on failure.
  */
 function upload_image($file, $target_subpath = 'uploads/') {
-    if (empty($file['name']) || $file['error'] !== UPLOAD_ERR_OK) return false;
+    if (empty($file) || !is_array($file) || empty($file['name']) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return false;
 
     $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'ico'];
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
