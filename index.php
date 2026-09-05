@@ -15,8 +15,24 @@ if (defined('INSTALLED') && !INSTALLED) {
 require_once __DIR__ . '/includes/db.php';
 
 // Simple Router
-$request = $_SERVER['REQUEST_URI'];
+$request = $_SERVER['REQUEST_URI'] ?? '/';
 $path = rtrim(strtok($request, '?'), '/');
+
+if ($path !== '/install' && strpos($path, '/install/') !== 0) {
+    require_once __DIR__ . '/includes/db.php';
+    $conn = get_db_connection();
+    if (!$conn) {
+        header("Location: /install/");
+        exit;
+    }
+
+    try {
+        $conn->query("SELECT 1 FROM site_settings LIMIT 1");
+    } catch (Exception $e) {
+        header("Location: /install/");
+        exit;
+    }
+}
 
 if (empty($path)) $path = '/';
 

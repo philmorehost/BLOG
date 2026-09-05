@@ -8,8 +8,22 @@ $success = '';
 if (file_exists(__DIR__ . '/../includes/config.php')) {
     include __DIR__ . '/../includes/config.php';
     if (defined('INSTALLED') && INSTALLED && $stage != 4) {
-        header('Location: /');
-        exit;
+        // Check if database actually has site_settings table
+        require_once __DIR__ . '/../includes/db.php';
+        $conn = get_db_connection();
+        $table_exists = false;
+        if ($conn) {
+            try {
+                $conn->query("SELECT 1 FROM site_settings LIMIT 1");
+                $table_exists = true;
+            } catch (Exception $e) {
+                $table_exists = false;
+            }
+        }
+        if ($table_exists) {
+            header('Location: /');
+            exit;
+        }
     }
 }
 
