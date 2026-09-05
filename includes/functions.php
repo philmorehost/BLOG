@@ -12,8 +12,32 @@ function get_settings() {
         'logo' => '',
         'favicon' => ''
     ];
-    $stmt = $conn->query("SELECT * FROM site_settings WHERE id = 1");
-    $settings = $stmt->fetch();
+    try {
+        $stmt = $conn->query("SELECT * FROM site_settings WHERE id = 1");
+        $settings = $stmt->fetch();
+    } catch (PDOException $e) {
+        // Table site_settings does not exist or database is uninitialized.
+        try {
+            $driver = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
+            if ($driver === 'sqlite' && file_exists(__DIR__ . '/../install/schema_sqlite.sql')) {
+                $schema = file_get_contents(__DIR__ . '/../install/schema_sqlite.sql');
+                $conn->exec($schema);
+            } elseif ($driver === 'mysql') {
+                if (file_exists(__DIR__ . '/../install/schema.sql')) {
+                    $schema = file_get_contents(__DIR__ . '/../install/schema.sql');
+                    $conn->exec($schema);
+                }
+                if (file_exists(__DIR__ . '/../install/data.sql')) {
+                    $data = file_get_contents(__DIR__ . '/../install/data.sql');
+                    $conn->exec($data);
+                }
+            }
+            $stmt = $conn->query("SELECT * FROM site_settings WHERE id = 1");
+            $settings = $stmt->fetch();
+        } catch (Exception $ex) {
+            $settings = false;
+        }
+    }
 
     if ($settings && !array_key_exists('header_code', $settings)) {
         try {
