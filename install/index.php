@@ -5,6 +5,31 @@ $stage = isset($_GET['stage']) ? (int)$_GET['stage'] : 1;
 $error = '';
 $success = '';
 
+require_once __DIR__ . '/../includes/social_poster.php';
+
+// Stage 1 License Verification Submit
+if ($stage == 1 && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['verify_license'])) {
+    $license_key = trim($_POST['license_key'] ?? '');
+    if (empty($license_key)) {
+        $error = "Please enter a valid license key to proceed with installation.";
+    } else {
+        $res = _sys_check_auth($license_key);
+        if (isset($res['status']) && $res['status'] === 1) {
+            $_SESSION['license_key'] = $license_key;
+            _sys_store_token([
+                'key' => $license_key,
+                'status' => 1,
+                'domain' => $_SERVER['HTTP_HOST'] ?? 'localhost',
+                'checked_at' => time()
+            ]);
+            header('Location: ?stage=2');
+            exit;
+        } else {
+            $error = $res['message'] ?? "Invalid license key or domain mismatch. Please verify your license key.";
+        }
+    }
+}
+
 if (file_exists(__DIR__ . '/../includes/config.php')) {
     include __DIR__ . '/../includes/config.php';
     if (defined('INSTALLED') && INSTALLED && $stage != 4) {
@@ -168,7 +193,7 @@ define('INSTALLED', true);";
                 <?php endif; ?>
 
                 <?php if ($stage == 1): ?>
-                    <h3 class="font-condensed h5 mb-3 text-white-50">Stage 1: Welcome & Requirements</h3>
+                    <h3 class="font-condensed h5 mb-3 text-white-50">Stage 1: License & Server Requirements</h3>
                     <ul class="list-group list-group-flush mb-4">
                         <li class="list-group-item bg-transparent text-white border-white border-opacity-10 d-flex justify-content-between">
                             PHP Version (>= 7.4)
@@ -187,7 +212,15 @@ define('INSTALLED', true);";
                             <span><?php echo is_writable(__DIR__ . '/../includes/') ? '✅' : '❌'; ?></span>
                         </li>
                     </ul>
-                    <a href="?stage=2" class="btn btn-primary w-100">Proceed to Database</a>
+
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small uppercase font-black">License Key</label>
+                            <input type="text" name="license_key" class="form-control bg-dark text-white border-secondary" placeholder="Enter your license key" required value="<?php echo htmlspecialchars($_POST['license_key'] ?? ''); ?>">
+                            <div class="form-text text-muted">Your license key is verified against domain <code><?php echo htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost'); ?></code>.</div>
+                        </div>
+                        <button type="submit" name="verify_license" class="btn btn-primary w-100 py-3 uppercase font-condensed fw-bold">Verify License & Proceed</button>
+                    </form>
 
                 <?php elseif ($stage == 2): ?>
                     <h3 class="font-condensed h5 mb-3 text-white-50">Stage 2: Database Configuration</h3>
