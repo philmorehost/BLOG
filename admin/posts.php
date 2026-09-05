@@ -16,11 +16,16 @@ if (isset($_GET['delete'])) {
 
 // Handle Bulk Deletion
 if (isset($_POST['bulk_delete']) && !empty($_POST['selected_posts'])) {
-    $ids = $_POST['selected_posts'];
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $stmt = $conn->prepare("DELETE FROM posts WHERE id IN ($placeholders)");
-    $stmt->execute($ids);
-    $success = count($ids) . " reports decommissioned in bulk.";
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF Token Validation Failed");
+    }
+    $ids = array_map('intval', $_POST['selected_posts']);
+    if (!empty($ids)) {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $conn->prepare("DELETE FROM posts WHERE id IN ($placeholders)");
+        $stmt->execute($ids);
+        $success = count($ids) . " reports decommissioned in bulk.";
+    }
 }
 
 // Handle Manual Post Submission

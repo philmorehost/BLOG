@@ -9,11 +9,16 @@ if (isset($_GET['delete'])) {
 
 // Handle Bulk Deletion
 if (isset($_POST['bulk_delete_cats']) && !empty($_POST['selected_cats'])) {
-    $ids = $_POST['selected_cats'];
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $stmt = $conn->prepare("DELETE FROM categories WHERE id IN ($placeholders)");
-    $stmt->execute($ids);
-    $success = count($ids) . " taxonomies decommissioned in bulk.";
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF Token Validation Failed");
+    }
+    $ids = array_map('intval', $_POST['selected_cats']);
+    if (!empty($ids)) {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $conn->prepare("DELETE FROM categories WHERE id IN ($placeholders)");
+        $stmt->execute($ids);
+        $success = count($ids) . " taxonomies decommissioned in bulk.";
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_category'])) {
