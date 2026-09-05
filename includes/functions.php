@@ -214,13 +214,28 @@ function auto_update_database() {
         } catch (Exception $e) {}
 
         // 4. Create Indexes
-        try {
-            $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug)");
-            $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category)");
-            $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_publish_date ON posts(publish_date)");
-            $conn->exec("CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug)");
-            $conn->exec("CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)");
-        } catch (Exception $e) {}
+        if ($driver === 'sqlite') {
+            try {
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug)");
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category)");
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_publish_date ON posts(publish_date)");
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug)");
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)");
+            } catch (Exception $e) {}
+        } else {
+            $indexes = [
+                "CREATE INDEX idx_posts_slug ON posts(slug)",
+                "CREATE INDEX idx_posts_category ON posts(category)",
+                "CREATE INDEX idx_posts_publish_date ON posts(publish_date)",
+                "CREATE INDEX idx_pages_slug ON pages(slug)",
+                "CREATE INDEX idx_categories_slug ON categories(slug)"
+            ];
+            foreach ($indexes as $idx_sql) {
+                try {
+                    $conn->exec($idx_sql);
+                } catch (Exception $e) {}
+            }
+        }
 
     } catch (Exception $e) {
         error_log("Auto-update failed: " . $e->getMessage());
