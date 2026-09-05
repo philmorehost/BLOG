@@ -54,11 +54,42 @@ if ($conn) {
         }
 
         // 3. Category Specific Feeds
-        $stmt_transfer = $conn->query("SELECT * FROM posts WHERE category = 'Transfer News' AND (is_scheduled = 0 OR publish_date <= $now) ORDER BY publish_date DESC LIMIT 4");
-        $transferUpdates = $stmt_transfer->fetchAll();
+        $primary_cat = !empty($settings['section_primary_cat']) ? $settings['section_primary_cat'] : 'Football News';
+        $secondary_cat = !empty($settings['section_secondary_cat']) ? $settings['section_secondary_cat'] : 'Transfer News';
+        $third_cat = !empty($settings['section_third_cat']) ? $settings['section_third_cat'] : null;
+        $fourth_cat = !empty($settings['section_fourth_cat']) ? $settings['section_fourth_cat'] : null;
 
-        $stmt_football = $conn->query("SELECT * FROM posts WHERE category = 'Football News' AND (is_scheduled = 0 OR publish_date <= $now) ORDER BY publish_date DESC LIMIT 4");
-        $footballReports = $stmt_football->fetchAll();
+        // Primary Category Section
+        $stmt_primary = $conn->prepare("SELECT * FROM posts WHERE LOWER(category) = LOWER(?) AND (is_scheduled = 0 OR publish_date <= $now) ORDER BY publish_date DESC LIMIT 4");
+        $stmt_primary->execute([$primary_cat]);
+        $primaryReports = $stmt_primary->fetchAll();
+        if (empty($primaryReports)) {
+            $primaryReports = $conn->query("SELECT * FROM posts WHERE (is_scheduled = 0 OR publish_date <= $now) ORDER BY publish_date DESC LIMIT 4")->fetchAll();
+        }
+
+        // Secondary Category Section
+        $stmt_secondary = $conn->prepare("SELECT * FROM posts WHERE LOWER(category) = LOWER(?) AND (is_scheduled = 0 OR publish_date <= $now) ORDER BY publish_date DESC LIMIT 4");
+        $stmt_secondary->execute([$secondary_cat]);
+        $secondaryReports = $stmt_secondary->fetchAll();
+        if (empty($secondaryReports)) {
+            $secondaryReports = $conn->query("SELECT * FROM posts WHERE (is_scheduled = 0 OR publish_date <= $now) ORDER BY publish_date DESC LIMIT 4")->fetchAll();
+        }
+
+        // Third Category Section
+        $thirdReports = [];
+        if ($third_cat) {
+            $stmt_third = $conn->prepare("SELECT * FROM posts WHERE LOWER(category) = LOWER(?) AND (is_scheduled = 0 OR publish_date <= $now) ORDER BY publish_date DESC LIMIT 4");
+            $stmt_third->execute([$third_cat]);
+            $thirdReports = $stmt_third->fetchAll();
+        }
+
+        // Fourth Category Section
+        $fourthReports = [];
+        if ($fourth_cat) {
+            $stmt_fourth = $conn->prepare("SELECT * FROM posts WHERE LOWER(category) = LOWER(?) AND (is_scheduled = 0 OR publish_date <= $now) ORDER BY publish_date DESC LIMIT 4");
+            $stmt_fourth->execute([$fourth_cat]);
+            $fourthReports = $stmt_fourth->fetchAll();
+        }
     }
 }
 
@@ -143,17 +174,17 @@ if ($category) {
         <section class="py-20 bg-[#05070a] border-y border-white/5">
             <div class="container-fluid px-4 px-md-10">
                 <div class="row g-10">
-                    <!-- Football News -->
+                    <!-- Primary Category Section -->
                     <div class="col-lg-6">
                         <div class="flex items-center justify-between mb-10">
                             <h3 class="text-2xl font-condensed fw-black italic text-white uppercase border-l-4 border-electric-red pl-4"><?php echo htmlspecialchars($settings['section_football_title'] ?? 'Football News'); ?></h3>
-                            <a href="/category/football-news" class="text-electric-red font-condensed fw-black italic uppercase text-xs text-decoration-none hover:text-white transition-colors">Full Archive →</a>
+                            <a href="/category/<?php echo urlencode(strtolower(str_replace(' ', '-', $primary_cat))); ?>" class="text-electric-red font-condensed fw-black italic uppercase text-xs text-decoration-none hover:text-white transition-colors">Full Archive →</a>
                         </div>
                         <div class="space-y-8">
-                            <?php foreach ($footballReports as $fr): ?>
+                            <?php foreach ($primaryReports as $fr): ?>
                                 <a href="/post/<?php echo $fr['slug']; ?>" class="flex gap-6 group text-decoration-none">
                                     <div class="w-32 h-24 flex-shrink-0 overflow-hidden rounded-xl border border-white/10">
-                                        <img src="<?php echo $fr['image']; ?>" class="w-full h-full object-fit-cover transition-transform duration-500 group-hover:scale-110" alt="<?php echo htmlspecialchars($fr['title']); ?>">
+                                        <img src="<?php echo $fr['image']; ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="<?php echo htmlspecialchars($fr['title']); ?>">
                                     </div>
                                     <div class="flex-grow py-1">
                                         <h4 class="text-lg font-condensed fw-black italic text-white uppercase group-hover:text-electric-red transition-colors line-clamp-2 leading-tight mb-2"><?php echo $fr['title']; ?></h4>
@@ -164,17 +195,17 @@ if ($category) {
                         </div>
                     </div>
 
-                    <!-- Transfer News -->
+                    <!-- Secondary Category Section -->
                     <div class="col-lg-6">
                         <div class="flex items-center justify-between mb-10">
                             <h3 class="text-2xl font-condensed fw-black italic text-white uppercase border-l-4 border-electric-red pl-4"><?php echo htmlspecialchars($settings['section_transfer_title'] ?? 'Transfer Intelligence'); ?></h3>
-                            <a href="/category/transfer-news" class="text-electric-red font-condensed fw-black italic uppercase text-xs text-decoration-none hover:text-white transition-colors">Full Archive →</a>
+                            <a href="/category/<?php echo urlencode(strtolower(str_replace(' ', '-', $secondary_cat))); ?>" class="text-electric-red font-condensed fw-black italic uppercase text-xs text-decoration-none hover:text-white transition-colors">Full Archive →</a>
                         </div>
                         <div class="space-y-8">
-                            <?php foreach ($transferUpdates as $tu): ?>
+                            <?php foreach ($secondaryReports as $tu): ?>
                                 <a href="/post/<?php echo $tu['slug']; ?>" class="flex gap-6 group text-decoration-none">
                                     <div class="w-32 h-24 flex-shrink-0 overflow-hidden rounded-xl border border-white/10">
-                                        <img src="<?php echo $tu['image']; ?>" class="w-full h-full object-fit-cover transition-transform duration-500 group-hover:scale-110" alt="<?php echo htmlspecialchars($tu['title']); ?>">
+                                        <img src="<?php echo $tu['image']; ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="<?php echo htmlspecialchars($tu['title']); ?>">
                                     </div>
                                     <div class="flex-grow py-1">
                                         <h4 class="text-lg font-condensed fw-black italic text-white uppercase group-hover:text-electric-red transition-colors line-clamp-2 leading-tight mb-2"><?php echo $tu['title']; ?></h4>
@@ -184,6 +215,52 @@ if ($category) {
                             <?php endforeach; ?>
                         </div>
                     </div>
+
+                    <!-- Section 3 (if configured) -->
+                    <?php if (!empty($thirdReports)): ?>
+                    <div class="col-lg-6 mt-12">
+                        <div class="flex items-center justify-between mb-10">
+                            <h3 class="text-2xl font-condensed fw-black italic text-white uppercase border-l-4 border-electric-red pl-4"><?php echo htmlspecialchars($settings['section_third_title'] ?? 'Featured Reports'); ?></h3>
+                            <a href="/category/<?php echo urlencode(strtolower(str_replace(' ', '-', $third_cat))); ?>" class="text-electric-red font-condensed fw-black italic uppercase text-xs text-decoration-none hover:text-white transition-colors">Full Archive →</a>
+                        </div>
+                        <div class="space-y-8">
+                            <?php foreach ($thirdReports as $tr): ?>
+                                <a href="/post/<?php echo $tr['slug']; ?>" class="flex gap-6 group text-decoration-none">
+                                    <div class="w-32 h-24 flex-shrink-0 overflow-hidden rounded-xl border border-white/10">
+                                        <img src="<?php echo $tr['image']; ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="<?php echo htmlspecialchars($tr['title']); ?>">
+                                    </div>
+                                    <div class="flex-grow py-1">
+                                        <h4 class="text-lg font-condensed fw-black italic text-white uppercase group-hover:text-electric-red transition-colors line-clamp-2 leading-tight mb-2"><?php echo $tr['title']; ?></h4>
+                                        <div class="text-[10px] font-monospace text-white/30 uppercase"><?php echo date('M d, H:i', strtotime($tr['publish_date'])); ?></div>
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
+
+                    <!-- Section 4 (if configured) -->
+                    <?php if (!empty($fourthReports)): ?>
+                    <div class="col-lg-6 mt-12">
+                        <div class="flex items-center justify-between mb-10">
+                            <h3 class="text-2xl font-condensed fw-black italic text-white uppercase border-l-4 border-electric-red pl-4"><?php echo htmlspecialchars($settings['section_fourth_title'] ?? 'Analysis & Insights'); ?></h3>
+                            <a href="/category/<?php echo urlencode(strtolower(str_replace(' ', '-', $fourth_cat))); ?>" class="text-electric-red font-condensed fw-black italic uppercase text-xs text-decoration-none hover:text-white transition-colors">Full Archive →</a>
+                        </div>
+                        <div class="space-y-8">
+                            <?php foreach ($fourthReports as $fo): ?>
+                                <a href="/post/<?php echo $fo['slug']; ?>" class="flex gap-6 group text-decoration-none">
+                                    <div class="w-32 h-24 flex-shrink-0 overflow-hidden rounded-xl border border-white/10">
+                                        <img src="<?php echo $fo['image']; ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="<?php echo htmlspecialchars($fo['title']); ?>">
+                                    </div>
+                                    <div class="flex-grow py-1">
+                                        <h4 class="text-lg font-condensed fw-black italic text-white uppercase group-hover:text-electric-red transition-colors line-clamp-2 leading-tight mb-2"><?php echo $fo['title']; ?></h4>
+                                        <div class="text-[10px] font-monospace text-white/30 uppercase"><?php echo date('M d, H:i', strtotime($fo['publish_date'])); ?></div>
+                                    </div>
+                                </a>
+                            <?php endforeach; ?>
+                        </div>
+                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </section>

@@ -201,6 +201,12 @@ function auto_update_database() {
                 'section_latest_title VARCHAR(255) DEFAULT \'Latest Intelligence\'',
                 'section_football_title VARCHAR(255) DEFAULT \'Football News\'',
                 'section_transfer_title VARCHAR(255) DEFAULT \'Transfer Intelligence\'',
+                'section_primary_cat VARCHAR(100) DEFAULT \'Football News\'',
+                'section_secondary_cat VARCHAR(100) DEFAULT \'Transfer News\'',
+                'section_third_cat VARCHAR(100)',
+                'section_fourth_cat VARCHAR(100)',
+                'section_third_title VARCHAR(255) DEFAULT \'Featured Reports\'',
+                'section_fourth_title VARCHAR(255) DEFAULT \'Analysis & Insights\'',
                 'enable_live_feed BOOLEAN DEFAULT TRUE',
                 'enable_standings BOOLEAN DEFAULT TRUE'
             ],

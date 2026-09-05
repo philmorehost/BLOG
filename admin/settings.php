@@ -7,23 +7,33 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_general'])) {
-    $name = sanitize($_POST['name']);
-    $tagline = sanitize($_POST['tagline']);
-    $admin_email = sanitize($_POST['admin_email']);
-    $whatsapp = sanitize($_POST['whatsapp_number']);
-    $theme = sanitize($_POST['theme'] ?? 'news');
+if ($_SERVER['REQUEST_METHOD'] == 'POST' && (isset($_POST['save_general']) || isset($_POST['save_sections']))) {
+    $name = sanitize($_POST['name'] ?? $settings['name']);
+    $tagline = sanitize($_POST['tagline'] ?? $settings['tagline']);
+    $admin_email = sanitize($_POST['admin_email'] ?? $settings['admin_email']);
+    $whatsapp = sanitize($_POST['whatsapp_number'] ?? $settings['whatsapp_number']);
+    $theme = sanitize($_POST['theme'] ?? $settings['theme'] ?? 'news');
+
     $section_priority_title = sanitize($_POST['section_priority_title'] ?? 'Priority Intelligence');
     $section_latest_title = sanitize($_POST['section_latest_title'] ?? 'Latest Intelligence');
     $section_football_title = sanitize($_POST['section_football_title'] ?? 'Football News');
     $section_transfer_title = sanitize($_POST['section_transfer_title'] ?? 'Transfer Intelligence');
-    $enable_live_feed = isset($_POST['enable_live_feed']) ? 1 : 0;
-    $enable_standings = isset($_POST['enable_standings']) ? 1 : 0;
+    $section_third_title = sanitize($_POST['section_third_title'] ?? 'Featured Reports');
+    $section_fourth_title = sanitize($_POST['section_fourth_title'] ?? 'Analysis & Insights');
 
-    $header_code = $_POST['header_code'];
-    $footer_code = $_POST['footer_code'];
-    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ?, enable_live_feed = ?, enable_standings = ? WHERE id = 1");
-    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $enable_live_feed, $enable_standings]);
+    $section_primary_cat = sanitize($_POST['section_primary_cat'] ?? '');
+    $section_secondary_cat = sanitize($_POST['section_secondary_cat'] ?? '');
+    $section_third_cat = sanitize($_POST['section_third_cat'] ?? '');
+    $section_fourth_cat = sanitize($_POST['section_fourth_cat'] ?? '');
+
+    $enable_live_feed = isset($_POST['enable_live_feed']) ? 1 : ($settings['enable_live_feed'] ?? 1);
+    $enable_standings = isset($_POST['enable_standings']) ? 1 : ($settings['enable_standings'] ?? 1);
+
+    $header_code = $_POST['header_code'] ?? $settings['header_code'];
+    $footer_code = $_POST['footer_code'] ?? $settings['footer_code'];
+
+    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ?, section_third_title = ?, section_fourth_title = ?, section_primary_cat = ?, section_secondary_cat = ?, section_third_cat = ?, section_fourth_cat = ?, enable_live_feed = ?, enable_standings = ? WHERE id = 1");
+    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $section_third_title, $section_fourth_title, $section_primary_cat, $section_secondary_cat, $section_third_cat, $section_fourth_cat, $enable_live_feed, $enable_standings]);
 
     // Handle Logo Upload
     $logo_path = upload_image($_FILES['logo']);
@@ -97,6 +107,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_social'])) {
 
 $settings = get_settings();
 $activeTab = $_GET['tab'] ?? 'general';
+$all_categories = get_categories_with_counts();
 
 ?>
 <h1 class="font-condensed fw-black italic text-white display-5 mb-5">SITE <span class="text-danger">SETTINGS</span></h1>
@@ -121,8 +132,8 @@ $activeTab = $_GET['tab'] ?? 'general';
             <form method="POST" class="space-y-6">
                 <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <div class="bg-white/5 p-8 rounded-3xl border border-white/5">
-                    <h4 class="text-white font-black uppercase italic mb-6 small text-danger"><i class="bi bi-fonts me-2"></i> Landing Page Section Titles Customization</h4>
-                    <p class="text-white-50 text-xs mb-6">Customize the header titles for all sections on the main landing page.</p>
+                    <h4 class="text-white font-black uppercase italic mb-6 small text-danger"><i class="bi bi-fonts me-2"></i> Landing Page Category Sections Customization</h4>
+                    <p class="text-white-50 text-xs mb-6">Select categories and customize section titles for landing page content blocks.</p>
                     <div class="row g-4">
                         <div class="col-md-6">
                             <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Priority Section Title (Hero Tag)</label>
@@ -132,17 +143,69 @@ $activeTab = $_GET['tab'] ?? 'general';
                             <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Latest Section Title (Hero Sidebar Header)</label>
                             <input type="text" name="section_latest_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_latest_title'] ?? 'Latest Intelligence'); ?>">
                         </div>
+
+                        <!-- Primary Section -->
                         <div class="col-md-6">
-                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Primary Category Section Title</label>
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Primary Section Title</label>
                             <input type="text" name="section_football_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_football_title'] ?? 'Football News'); ?>">
                         </div>
                         <div class="col-md-6">
-                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Secondary Category Section Title</label>
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Primary Category Selector</label>
+                            <select name="section_primary_cat" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold">
+                                <option value="">-- All / Default --</option>
+                                <?php foreach ($all_categories as $c): ?>
+                                    <option value="<?php echo htmlspecialchars($c['name']); ?>" <?php echo (($settings['section_primary_cat'] ?? 'Football News') === $c['name']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($c['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <!-- Secondary Section -->
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Secondary Section Title</label>
                             <input type="text" name="section_transfer_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_transfer_title'] ?? 'Transfer Intelligence'); ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Secondary Category Selector</label>
+                            <select name="section_secondary_cat" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold">
+                                <option value="">-- All / Default --</option>
+                                <?php foreach ($all_categories as $c): ?>
+                                    <option value="<?php echo htmlspecialchars($c['name']); ?>" <?php echo (($settings['section_secondary_cat'] ?? 'Transfer News') === $c['name']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($c['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <!-- Section 3 -->
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Section 3 Title</label>
+                            <input type="text" name="section_third_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_third_title'] ?? 'Featured Reports'); ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Section 3 Category Selector</label>
+                            <select name="section_third_cat" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold">
+                                <option value="">-- Select Category --</option>
+                                <?php foreach ($all_categories as $c): ?>
+                                    <option value="<?php echo htmlspecialchars($c['name']); ?>" <?php echo (($settings['section_third_cat'] ?? '') === $c['name']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($c['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+
+                        <!-- Section 4 -->
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Section 4 Title</label>
+                            <input type="text" name="section_fourth_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_fourth_title'] ?? 'Analysis & Insights'); ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Section 4 Category Selector</label>
+                            <select name="section_fourth_cat" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold">
+                                <option value="">-- Select Category --</option>
+                                <?php foreach ($all_categories as $c): ?>
+                                    <option value="<?php echo htmlspecialchars($c['name']); ?>" <?php echo (($settings['section_fourth_cat'] ?? '') === $c['name']) ? 'selected' : ''; ?>><?php echo htmlspecialchars($c['name']); ?></option>
+                                <?php endforeach; ?>
+                            </select>
                         </div>
                     </div>
                 </div>
-                <button type="submit" name="save_sections" class="mt-8 bg-danger text-white px-10 py-3 rounded-2xl font-black uppercase italic tracking-widest hover:bg-white hover:text-danger transition-all">Save Section Titles</button>
+                <button type="submit" name="save_sections" class="mt-8 bg-danger text-white px-10 py-3 rounded-2xl font-black uppercase italic tracking-widest hover:bg-white hover:text-danger transition-all">Save Section Settings</button>
             </form>
 
         <?php elseif ($activeTab == 'general'): ?>
