@@ -124,7 +124,7 @@ $pages = $stmt->fetchAll();
                     </td>
                     <td class="px-5 py-4 border-white border-opacity-5 text-end">
                         <div class="d-flex justify-content-end gap-3">
-                            <button class="btn btn-sm btn-outline-light border-0 edit-page"
+                            <button type="button" class="btn btn-sm btn-outline-light border-0 edit-page"
                                 data-id="<?php echo $p['id']; ?>"
                                 data-title="<?php echo htmlspecialchars($p['title']); ?>"
                                 data-slug="<?php echo htmlspecialchars($p['slug']); ?>"
@@ -174,7 +174,7 @@ $pages = $stmt->fetchAll();
                             <input type="text" name="slug" id="page_slug" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl" required>
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown Supported)</label>
+                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown & HTML Supported)</label>
                             <textarea name="content" id="page_content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl font-mono"></textarea>
                         </div>
                         <div class="col-md-4">

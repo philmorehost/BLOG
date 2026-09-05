@@ -852,9 +852,37 @@ function upload_image($file, $target_subpath = 'uploads/') {
     return false;
 }
 
-// Basic Markdown to HTML
+// Basic Markdown / HTML Renderer
 function parse_markdown($text) {
     if (empty($text)) return '';
+
+    // Check if $text contains HTML tags or Gutenberg comments
+    $is_html = (preg_match('/<[a-z1-6][^>]*>/i', $text) || strpos($text, '<!-- wp:') !== false);
+
+    if ($is_html) {
+        // Strip Gutenberg comments
+        $text = preg_replace('/<!--\s*\/?wp:.*?-->/s', '', $text);
+
+        // Decode HTML numeric/named entities (e.g. &#8217; to ’)
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Style Gutenberg and generic HTML tags
+        $text = str_replace('<p class="wp-block-paragraph">', '<p class="mb-4 leading-relaxed">', $text);
+        $text = str_replace('<ul class="wp-block-list">', '<ul class="list-disc ms-6 mb-4 space-y-2">', $text);
+        $text = str_replace('<ol class="wp-block-list">', '<ol class="list-decimal ms-6 mb-4 space-y-2">', $text);
+        $text = preg_replace('/<ol start="(\d+)" class="wp-block-list">/i', '<ol start="$1" class="list-decimal ms-6 mb-4 space-y-2">', $text);
+
+        // Ensure unstyled paragraph, list, and heading tags get consistent styling
+        $text = preg_replace('/<p(?![^>]*class=)>/i', '<p class="mb-4 leading-relaxed">', $text);
+        $text = preg_replace('/<ul(?![^>]*class=)>/i', '<ul class="list-disc ms-6 mb-4 space-y-2">', $text);
+        $text = preg_replace('/<ol(?![^>]*class=)>/i', '<ol class="list-decimal ms-6 mb-4 space-y-2">', $text);
+        $text = preg_replace('/<h2(?![^>]*class=)>/i', '<h2 class="h3 font-condensed fw-black text-electric-red mt-4 mb-3 uppercase italic">', $text);
+        $text = preg_replace('/<h3(?![^>]*class=)>/i', '<h3 class="h4 font-condensed fw-black text-white mt-4 mb-2 uppercase italic">', $text);
+
+        return $text;
+    }
+
+    // Markdown Parser
     $text = htmlspecialchars($text);
 
     // Headers
@@ -871,7 +899,6 @@ function parse_markdown($text) {
         $block = trim($block);
         if (empty($block)) continue;
 
-        // If it doesn't start with a header tag or table, wrap in <p>
         if (!preg_match('/^<(h2|h3|div|table)/i', $block)) {
             $html_blocks[] = '<p class="mb-4 leading-relaxed">' . nl2br($block) . '</p>';
         } else {

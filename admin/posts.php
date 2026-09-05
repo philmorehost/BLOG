@@ -496,8 +496,8 @@ try {
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown supported)</label>
-                            <textarea name="content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl" required></textarea>
+                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown & HTML supported)</label>
+                            <textarea name="content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl font-mono" required></textarea>
                         </div>
                         <div class="col-12 mt-4">
                             <h6 class="text-danger font-condensed italic fw-black border-bottom border-white border-opacity-10 pb-2 mb-3">SEO METADATA & TAGS</h6>
@@ -584,8 +584,8 @@ try {
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown supported)</label>
-                            <textarea name="content" id="edit_content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl" required></textarea>
+                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown & HTML supported)</label>
+                            <textarea name="content" id="edit_content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl font-mono" required></textarea>
                         </div>
                         <div class="col-12 mt-4">
                             <h6 class="text-danger font-condensed italic fw-black border-bottom border-white border-opacity-10 pb-2 mb-3">SEO METADATA & TAGS</h6>
