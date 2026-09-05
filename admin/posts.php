@@ -373,7 +373,7 @@ try {
                         <?php endif; ?>
                     </td>
                     <td class="px-5 py-4 border-white border-opacity-5 text-end">
-                        <button class="btn btn-link text-white-50 hover:text-white p-0 me-3 edit-post"
+                        <button type="button" class="btn btn-link text-white-50 hover:text-white p-0 me-3 edit-post"
                             data-id="<?php echo $post['id']; ?>"
                             data-title="<?php echo htmlspecialchars($post['title']); ?>"
                             data-cat="<?php echo htmlspecialchars($post['category']); ?>"
