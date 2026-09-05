@@ -36,7 +36,18 @@ if (file_exists(__DIR__ . '/../includes/config.php')) {
         require_once __DIR__ . '/../includes/db.php';
         require_once __DIR__ . '/../includes/functions.php';
         $conn = get_db_connection();
+        $is_initialized = false;
         if ($conn) {
+            try {
+                $count = $conn->query("SELECT COUNT(*) FROM site_settings")->fetchColumn();
+                if ($count > 0) {
+                    $is_initialized = true;
+                }
+            } catch (Exception $e) {
+                $is_initialized = false;
+            }
+        }
+        if ($is_initialized) {
             auto_update_database();
             // Installation Lock Screen
             ?>
