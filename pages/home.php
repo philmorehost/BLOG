@@ -85,7 +85,7 @@ if ($category) {
                             <div class="px-4 px-md-10 py-10 py-md-15 relative z-10 w-full">
                                 <div class="max-w-3xl">
                                     <div class="flex items-center gap-3 mb-4">
-                                        <span class="bg-electric-red text-white font-condensed fw-black italic px-4 py-1 uppercase tracking-widest text-xs">Priority Intelligence</span>
+                                        <span class="bg-electric-red text-white font-condensed fw-black italic px-4 py-1 uppercase tracking-widest text-xs"><?php echo htmlspecialchars($settings['section_priority_title'] ?? 'Priority Intelligence'); ?></span>
                                         <span class="text-white/50 font-monospace text-[10px] uppercase tracking-tighter"><?php echo date('H:i:s T', strtotime($hero['publish_date'])); ?></span>
                                     </div>
                                     <h1 class="text-4xl md:text-7xl font-condensed fw-black text-white italic uppercase lh-1 mb-6 tracking-tighter">
@@ -108,7 +108,7 @@ if ($category) {
                             <div class="p-4 border-b border-white/5 bg-black/40">
                                 <h2 class="text-lg font-condensed fw-black italic text-white uppercase mb-0 tracking-widest flex items-center gap-3">
                                     <span class="w-1.5 h-4 bg-electric-red"></span>
-                                    Latest Intelligence
+                                    <?php echo htmlspecialchars($settings['section_latest_title'] ?? 'Latest Intelligence'); ?>
                                 </h2>
                             </div>
                             <div class="flex-grow overflow-y-auto no-scrollbar" style="max-height: calc(85vh - 60px);">
@@ -146,7 +146,7 @@ if ($category) {
                     <!-- Football News -->
                     <div class="col-lg-6">
                         <div class="flex items-center justify-between mb-10">
-                            <h3 class="text-2xl font-condensed fw-black italic text-white uppercase border-l-4 border-electric-red pl-4">Football News</h3>
+                            <h3 class="text-2xl font-condensed fw-black italic text-white uppercase border-l-4 border-electric-red pl-4"><?php echo htmlspecialchars($settings['section_football_title'] ?? 'Football News'); ?></h3>
                             <a href="/category/football-news" class="text-electric-red font-condensed fw-black italic uppercase text-xs text-decoration-none hover:text-white transition-colors">Full Archive →</a>
                         </div>
                         <div class="space-y-8">
@@ -167,7 +167,7 @@ if ($category) {
                     <!-- Transfer News -->
                     <div class="col-lg-6">
                         <div class="flex items-center justify-between mb-10">
-                            <h3 class="text-2xl font-condensed fw-black italic text-white uppercase border-l-4 border-electric-red pl-4">Transfer Intelligence</h3>
+                            <h3 class="text-2xl font-condensed fw-black italic text-white uppercase border-l-4 border-electric-red pl-4"><?php echo htmlspecialchars($settings['section_transfer_title'] ?? 'Transfer Intelligence'); ?></h3>
                             <a href="/category/transfer-news" class="text-electric-red font-condensed fw-black italic uppercase text-xs text-decoration-none hover:text-white transition-colors">Full Archive →</a>
                         </div>
                         <div class="space-y-8">

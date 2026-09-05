@@ -39,7 +39,12 @@ CREATE TABLE IF NOT EXISTS site_settings (
     tt_client_key VARCHAR(255),
     tt_client_secret VARCHAR(255),
     tt_access_token TEXT,
-    taxonomy_migrated BOOLEAN DEFAULT FALSE
+    taxonomy_migrated BOOLEAN DEFAULT FALSE,
+    theme VARCHAR(50) DEFAULT 'news',
+    section_priority_title VARCHAR(255) DEFAULT 'Priority Intelligence',
+    section_latest_title VARCHAR(255) DEFAULT 'Latest Intelligence',
+    section_football_title VARCHAR(255) DEFAULT 'Football News',
+    section_transfer_title VARCHAR(255) DEFAULT 'Transfer Intelligence'
 );
 
 CREATE TABLE IF NOT EXISTS users (

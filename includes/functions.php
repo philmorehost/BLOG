@@ -182,7 +182,16 @@ function auto_update_database() {
 
         // 2. Column Auto-Migrations
         $columns_map = [
-            'site_settings' => ['header_code TEXT', 'footer_code TEXT', 'taxonomy_migrated BOOLEAN DEFAULT FALSE'],
+            'site_settings' => [
+                'header_code TEXT',
+                'footer_code TEXT',
+                'taxonomy_migrated BOOLEAN DEFAULT FALSE',
+                'theme VARCHAR(50) DEFAULT \'news\'',
+                'section_priority_title VARCHAR(255) DEFAULT \'Priority Intelligence\'',
+                'section_latest_title VARCHAR(255) DEFAULT \'Latest Intelligence\'',
+                'section_football_title VARCHAR(255) DEFAULT \'Football News\'',
+                'section_transfer_title VARCHAR(255) DEFAULT \'Transfer Intelligence\''
+            ],
             'posts' => ['source_url VARCHAR(255)', 'video_url VARCHAR(255)'],
             'categories' => ['slug VARCHAR(100)'],
             'pages' => ['is_external BOOLEAN DEFAULT FALSE', 'external_url VARCHAR(255)'],

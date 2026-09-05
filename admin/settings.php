@@ -12,11 +12,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_general'])) {
     $tagline = sanitize($_POST['tagline']);
     $admin_email = sanitize($_POST['admin_email']);
     $whatsapp = sanitize($_POST['whatsapp_number']);
+    $theme = sanitize($_POST['theme'] ?? 'news');
+    $section_priority_title = sanitize($_POST['section_priority_title'] ?? 'Priority Intelligence');
+    $section_latest_title = sanitize($_POST['section_latest_title'] ?? 'Latest Intelligence');
+    $section_football_title = sanitize($_POST['section_football_title'] ?? 'Football News');
+    $section_transfer_title = sanitize($_POST['section_transfer_title'] ?? 'Transfer Intelligence');
 
     $header_code = $_POST['header_code'];
     $footer_code = $_POST['footer_code'];
-    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ? WHERE id = 1");
-    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code]);
+    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ? WHERE id = 1");
+    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title]);
 
     // Handle Logo Upload
     $logo_path = upload_image($_FILES['logo']);
@@ -130,6 +135,32 @@ $activeTab = $_GET['tab'] ?? 'general';
                         <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">WhatsApp Number</label>
                         <input type="text" name="whatsapp_number" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold" value="<?php echo $settings['whatsapp_number']; ?>">
                     </div>
+
+                    <!-- Landing Page Section Titles -->
+                    <div class="col-12 mt-6">
+                        <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
+                            <h4 class="text-white font-black uppercase italic mb-4 small text-danger"><i class="bi bi-fonts me-2"></i> Landing Page Section Titles</h4>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Priority Section Title</label>
+                                    <input type="text" name="section_priority_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_priority_title'] ?? 'Priority Intelligence'); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Latest Section Title</label>
+                                    <input type="text" name="section_latest_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_latest_title'] ?? 'Latest Intelligence'); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Primary Category Section Title</label>
+                                    <input type="text" name="section_football_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_football_title'] ?? 'Football News'); ?>">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Secondary Category Section Title</label>
+                                    <input type="text" name="section_transfer_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_transfer_title'] ?? 'Transfer Intelligence'); ?>">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                     <div class="col-12">
                         <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Custom Header Code (JS/CSS/Meta)</label>
                         <textarea name="header_code" rows="5" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-mono text-sm" placeholder="Paste code here to appear in <head>"><?php echo htmlspecialchars($settings['header_code'] ?? ''); ?></textarea>
