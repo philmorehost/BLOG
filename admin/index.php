@@ -13,24 +13,68 @@ if (!is_admin()) {
 }
 
 require_once __DIR__ . '/../includes/social_poster.php';
+
+$license_error = '';
+if (isset($_POST['reactivate_license'])) {
+    $license_key = trim($_POST['license_key'] ?? '');
+    if (empty($license_key)) {
+        $license_error = "Please enter a valid license key.";
+    } else {
+        $res = _sys_check_auth($license_key);
+        if (isset($res['status']) && $res['status'] === 1) {
+            _sys_store_token([
+                'key' => $license_key,
+                'status' => 1,
+                'domain' => $_SERVER['HTTP_HOST'] ?? 'localhost',
+                'checked_at' => time()
+            ]);
+            redirect($admin_base);
+        } else {
+            $license_error = $res['message'] ?? "Invalid license key or domain mismatch. Please try again.";
+        }
+    }
+}
+
 if (!_sys_verify_token()) {
     ?>
     <!DOCTYPE html>
     <html lang="en" data-bs-theme="dark">
     <head>
         <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>License Verification Required</title>
         <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-        <style>body{background:#05070a;color:#fff;font-family:sans-serif;padding-top:100px;}</style>
+        <style>body{background:#05070a;color:#fff;font-family:sans-serif;padding-top:60px;padding-bottom:60px;}</style>
     </head>
     <body>
     <div class="container text-center col-md-6">
-        <div class="card bg-dark border-danger p-5 shadow-lg">
-            <div class="display-1 text-danger mb-3">⚠️</div>
-            <h2 class="text-white mb-3">Invalid or Expired License</h2>
-            <p class="text-white-50">System access is restricted due to an invalid or missing license key for domain <code><?php echo htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost'); ?></code>.</p>
+        <div class="card bg-dark border-danger p-4 p-md-5 shadow-lg text-start">
+            <div class="text-center">
+                <div class="display-1 text-danger mb-3">⚠️</div>
+                <h2 class="text-white mb-3">Invalid or Expired License</h2>
+                <p class="text-white-50">System access is restricted due to an invalid or missing license key for domain <code><?php echo htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost'); ?></code>.</p>
+            </div>
+
+            <?php if (!empty($license_error)): ?>
+                <div class="alert alert-danger mt-3"><?php echo htmlspecialchars($license_error); ?></div>
+            <?php endif; ?>
+
+            <form method="POST" class="mt-4">
+                <div class="mb-3">
+                    <label class="form-label text-white-50 small text-uppercase fw-bold">Enter License Key</label>
+                    <input type="text" name="license_key" class="form-control bg-black text-white border-secondary py-2" placeholder="e.g. XXXX-XXXX-XXXX-XXXX" required value="<?php echo htmlspecialchars($_POST['license_key'] ?? ''); ?>">
+                    <div class="form-text text-muted mt-2">
+                        Need a license key? Register <code><?php echo htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost'); ?></code> at
+                        <a href="https://manager.pmhserver.name.ng" target="_blank" class="text-danger fw-bold text-decoration-underline">manager.pmhserver.name.ng</a>.
+                    </div>
+                </div>
+                <button type="submit" name="reactivate_license" class="btn btn-danger w-100 py-2 fw-bold text-uppercase">Reactivate License & Access System</button>
+            </form>
+
             <hr class="border-secondary my-4">
-            <p class="small text-muted">Please contact support or activate a valid license key for this domain.</p>
+            <div class="text-center">
+                <p class="small text-muted mb-0">Please contact support or activate a valid license key for this domain.</p>
+            </div>
         </div>
     </div>
     </body>
