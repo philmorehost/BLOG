@@ -479,11 +479,22 @@ include __DIR__ . '/header.php';
 
                         <!-- TAB 2: WXR XML FILE UPLOAD -->
                         <div class="tab-pane fade" id="xml-tab-pane" role="tabpanel">
-                            <form method="POST" enctype="multipart/form-data">
+                            <form id="xmlImportForm" method="POST" enctype="multipart/form-data">
                                 <div class="mb-4">
                                     <label class="form-label text-white-50 small uppercase font-black">Select WordPress Export XML File (.xml)</label>
-                                    <input type="file" name="xml_file" class="form-control bg-dark text-white border-secondary" accept=".xml" required>
+                                    <input type="file" name="xml_file" id="xmlFileInput" class="form-control bg-dark text-white border-secondary" accept=".xml" required>
                                     <div class="form-text text-muted">Go to your WordPress Admin -> Tools -> Export -> All Content to download your XML export file.</div>
+                                </div>
+
+                                <!-- Real-time Upload Progress Bar -->
+                                <div id="uploadProgressContainer" class="d-none mb-4">
+                                    <div class="d-flex justify-content-between text-white-50 small mb-1">
+                                        <span id="uploadStatusText" class="fw-bold font-condensed uppercase text-primary"><i class="bi bi-cloud-arrow-up me-1"></i>Uploading XML File...</span>
+                                        <span id="uploadPercentText" class="fw-bold font-monospace">0%</span>
+                                    </div>
+                                    <div class="progress bg-black border border-secondary" style="height: 18px; border-radius: 9px;">
+                                        <div id="uploadProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;"></div>
+                                    </div>
                                 </div>
 
                                 <div class="card bg-black border-secondary p-3 mb-4">
@@ -495,7 +506,7 @@ include __DIR__ . '/header.php';
                                     </ul>
                                 </div>
 
-                                <button type="submit" class="btn btn-primary w-100 py-3 uppercase font-condensed fw-bold">
+                                <button type="submit" id="xmlSubmitBtn" class="btn btn-primary w-100 py-3 uppercase font-condensed fw-bold">
                                     <i class="bi bi-cloud-upload me-2"></i>Start XML File Import
                                 </button>
                             </form>
@@ -507,5 +518,62 @@ include __DIR__ . '/header.php';
         </div>
     </div>
 </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const xmlForm = document.getElementById('xmlImportForm');
+    if (xmlForm) {
+        xmlForm.addEventListener('submit', function(e) {
+            const fileInput = document.getElementById('xmlFileInput');
+            if (!fileInput.files || fileInput.files.length === 0) return;
+
+            e.preventDefault();
+            const formData = new FormData(xmlForm);
+            const xhr = new XMLHttpRequest();
+
+            const progressContainer = document.getElementById('uploadProgressContainer');
+            const progressBar = document.getElementById('uploadProgressBar');
+            const percentText = document.getElementById('uploadPercentText');
+            const statusText = document.getElementById('uploadStatusText');
+            const submitBtn = document.getElementById('xmlSubmitBtn');
+
+            progressContainer.classList.remove('d-none');
+            submitBtn.disabled = true;
+
+            xhr.upload.addEventListener('progress', function(event) {
+                if (event.lengthComputable) {
+                    const percent = Math.round((event.loaded / event.total) * 100);
+                    progressBar.style.width = percent + '%';
+                    percentText.textContent = percent + '%';
+                    if (percent === 100) {
+                        statusText.innerHTML = '<i class="bi bi-gear-wide-connected me-1 spinner-border spinner-border-sm"></i> File Uploaded! Processing and Importing XML Content...';
+                        progressBar.classList.add('bg-success');
+                    }
+                }
+            });
+
+            xhr.addEventListener('load', function() {
+                if (xhr.status === 200) {
+                    // Replace body content with server response
+                    document.open();
+                    document.write(xhr.responseText);
+                    document.close();
+                } else {
+                    alert('An error occurred during file upload. Please try again.');
+                    submitBtn.disabled = false;
+                }
+            });
+
+            xhr.addEventListener('error', function() {
+                alert('Upload failed due to a network error.');
+                submitBtn.disabled = false;
+            });
+
+            xhr.open('POST', window.location.href, true);
+            xhr.send(formData);
+        });
+    }
+});
+</script>
 
 <?php include __DIR__ . '/footer.php'; ?>

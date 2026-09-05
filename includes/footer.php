@@ -79,7 +79,7 @@
         </div>
     </footer>
     <!-- Cookie Consent Banner -->
-    <div id="cookie-consent" class="fixed-bottom p-4 bg-black border-top border-electric-red z-[9999] transition-all duration-500 transform translate-y-full">
+    <div id="cookie-consent" class="fixed-bottom p-4 bg-black border-top border-electric-red z-[9999] transition-all duration-500 transform translate-y-full pointer-events-none">
         <div class="container-fluid px-4">
             <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-4">
                 <div class="text-white-50 small font-condensed tracking-wide">
@@ -99,19 +99,21 @@
         document.addEventListener('DOMContentLoaded', function() {
             if (!localStorage.getItem('cookieConsent')) {
                 const banner = document.getElementById('cookie-consent');
-                setTimeout(() => {
-                    banner.classList.remove('translate-y-full');
-                }, 1000);
+                if (banner) {
+                    setTimeout(() => {
+                        banner.classList.remove('translate-y-full', 'pointer-events-none');
+                    }, 500);
 
-                document.getElementById('accept-cookies').onclick = function() {
-                    localStorage.setItem('cookieConsent', 'accepted');
-                    banner.classList.add('translate-y-full');
-                };
+                    document.getElementById('accept-cookies').onclick = function() {
+                        localStorage.setItem('cookieConsent', 'accepted');
+                        banner.classList.add('translate-y-full', 'pointer-events-none');
+                    };
 
-                document.getElementById('decline-cookies').onclick = function() {
-                    localStorage.setItem('cookieConsent', 'declined');
-                    banner.classList.add('translate-y-full');
-                };
+                    document.getElementById('decline-cookies').onclick = function() {
+                        localStorage.setItem('cookieConsent', 'declined');
+                        banner.classList.add('translate-y-full', 'pointer-events-none');
+                    };
+                }
             }
         });
     </script>

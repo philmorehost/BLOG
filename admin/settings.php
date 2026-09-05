@@ -106,6 +106,7 @@ $activeTab = $_GET['tab'] ?? 'general';
 <div class="bg-[#0a0e17] rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
     <div class="d-flex flex-wrap border-bottom border-white/5 bg-black">
         <a href="?tab=general" class="flex-grow-1 text-center py-4 text-[10px] font-black uppercase tracking-widest text-decoration-none border-bottom-2 <?php echo $activeTab == 'general' ? 'text-danger border-danger' : 'text-secondary border-transparent'; ?>">General</a>
+        <a href="?tab=sections" class="flex-grow-1 text-center py-4 text-[10px] font-black uppercase tracking-widest text-decoration-none border-bottom-2 <?php echo $activeTab == 'sections' ? 'text-danger border-danger' : 'text-secondary border-transparent'; ?>"><i class="bi bi-fonts me-1"></i> Section Titles</a>
         <a href="?tab=ai" class="flex-grow-1 text-center py-4 text-[10px] font-black uppercase tracking-widest text-decoration-none border-bottom-2 <?php echo $activeTab == 'ai' ? 'text-danger border-danger' : 'text-secondary border-transparent'; ?>">AI Core</a>
         <a href="?tab=smtp" class="flex-grow-1 text-center py-4 text-[10px] font-black uppercase tracking-widest text-decoration-none border-bottom-2 <?php echo $activeTab == 'smtp' ? 'text-danger border-danger' : 'text-secondary border-transparent'; ?>">SMTP</a>
         <a href="?tab=security" class="flex-grow-1 text-center py-4 text-[10px] font-black uppercase tracking-widest text-decoration-none border-bottom-2 <?php echo $activeTab == 'security' ? 'text-danger border-danger' : 'text-secondary border-transparent'; ?>">Security</a>
@@ -114,7 +115,35 @@ $activeTab = $_GET['tab'] ?? 'general';
     </div>
 
     <div class="p-5 p-md-5">
-        <?php if ($activeTab == 'general'): ?>
+        <?php if ($activeTab == 'sections'): ?>
+            <form method="POST" class="space-y-6">
+                <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+                <div class="bg-white/5 p-8 rounded-3xl border border-white/5">
+                    <h4 class="text-white font-black uppercase italic mb-6 small text-danger"><i class="bi bi-fonts me-2"></i> Landing Page Section Titles Customization</h4>
+                    <p class="text-white-50 text-xs mb-6">Customize the header titles for all sections on the main landing page.</p>
+                    <div class="row g-4">
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Priority Section Title (Hero Tag)</label>
+                            <input type="text" name="section_priority_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_priority_title'] ?? 'Priority Intelligence'); ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Latest Section Title (Hero Sidebar Header)</label>
+                            <input type="text" name="section_latest_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_latest_title'] ?? 'Latest Intelligence'); ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Primary Category Section Title</label>
+                            <input type="text" name="section_football_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_football_title'] ?? 'Football News'); ?>">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">Secondary Category Section Title</label>
+                            <input type="text" name="section_transfer_title" class="w-full bg-black/40 border border-white/10 rounded-xl px-4 py-3 text-white font-bold" value="<?php echo htmlspecialchars($settings['section_transfer_title'] ?? 'Transfer Intelligence'); ?>">
+                        </div>
+                    </div>
+                </div>
+                <button type="submit" name="save_sections" class="mt-8 bg-danger text-white px-10 py-3 rounded-2xl font-black uppercase italic tracking-widest hover:bg-white hover:text-danger transition-all">Save Section Titles</button>
+            </form>
+
+        <?php elseif ($activeTab == 'general'): ?>
             <form method="POST" enctype="multipart/form-data" class="space-y-6">
                 <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <div class="row g-4">
