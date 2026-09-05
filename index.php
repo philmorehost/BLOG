@@ -20,6 +20,7 @@ $path = rtrim(strtok($request, '?'), '/');
 
 if ($path !== '/install' && strpos($path, '/install/') !== 0) {
     require_once __DIR__ . '/includes/db.php';
+    require_once __DIR__ . '/includes/functions.php';
     $conn = get_db_connection();
     if (!$conn) {
         header("Location: /install/");
@@ -27,11 +28,7 @@ if ($path !== '/install' && strpos($path, '/install/') !== 0) {
     }
 
     try {
-        $count = $conn->query("SELECT COUNT(*) FROM site_settings")->fetchColumn();
-        if ($count == 0) {
-            header("Location: /install/");
-            exit;
-        }
+        auto_update_database();
     } catch (Exception $e) {
         header("Location: /install/");
         exit;

@@ -139,14 +139,7 @@ function get_settings() {
         }
     }
 
-    // Ensure database performance indexes exist
-    try {
-        $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug)");
-        $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category)");
-        $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_publish_date ON posts(publish_date)");
-        $conn->exec("CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug)");
-        $conn->exec("CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)");
-    } catch (Exception $e) {}
+    auto_update_database();
 
     $settings = $settings ?: [
         'name' => 'BLOGEASY',
@@ -154,6 +147,84 @@ function get_settings() {
         'favicon' => ''
     ];
     return $settings;
+}
+
+/**
+ * Intelligent Auto-Update System for Database Schema and Upgrades.
+ */
+function auto_update_database() {
+    static $updated = false;
+    if ($updated) return;
+    $updated = true;
+
+    $conn = get_db_connection();
+    if (!$conn) return;
+
+    try {
+        $driver = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        // 1. Ensure core tables exist
+        try {
+            $conn->query("SELECT 1 FROM site_settings LIMIT 1");
+        } catch (Exception $e) {
+            if ($driver === 'sqlite') {
+                if (file_exists(__DIR__ . '/../install/schema_sqlite.sql')) {
+                    $schema = file_get_contents(__DIR__ . '/../install/schema_sqlite.sql');
+                    $conn->exec($schema);
+                }
+            } else {
+                if (file_exists(__DIR__ . '/../install/schema.sql')) {
+                    $schema = file_get_contents(__DIR__ . '/../install/schema.sql');
+                    $conn->exec($schema);
+                }
+            }
+        }
+
+        // 2. Column Auto-Migrations
+        $columns_map = [
+            'site_settings' => ['header_code TEXT', 'footer_code TEXT', 'taxonomy_migrated BOOLEAN DEFAULT FALSE'],
+            'posts' => ['source_url VARCHAR(255)', 'video_url VARCHAR(255)'],
+            'categories' => ['slug VARCHAR(100)'],
+            'pages' => ['is_external BOOLEAN DEFAULT FALSE', 'external_url VARCHAR(255)'],
+            'users' => ['bio TEXT', 'twitter_url VARCHAR(255)', 'linkedin_url VARCHAR(255)', 'avatar VARCHAR(255)']
+        ];
+
+        foreach ($columns_map as $table => $cols) {
+            foreach ($cols as $col_def) {
+                $col_name = explode(' ', trim($col_def))[0];
+                try {
+                    $conn->query("SELECT $col_name FROM $table LIMIT 1");
+                } catch (Exception $e) {
+                    try {
+                        $conn->exec("ALTER TABLE $table ADD COLUMN $col_def");
+                    } catch (Exception $ex) {}
+                }
+            }
+        }
+
+        // 3. Populate missing category slugs
+        try {
+            $cats = $conn->query("SELECT id, name FROM categories WHERE slug IS NULL OR slug = ''")->fetchAll();
+            if ($cats) {
+                foreach ($cats as $c) {
+                    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $c['name'])));
+                    $conn->prepare("UPDATE categories SET slug = ? WHERE id = ?")->execute([$slug, $c['id']]);
+                }
+            }
+        } catch (Exception $e) {}
+
+        // 4. Create Indexes
+        try {
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug)");
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category)");
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_publish_date ON posts(publish_date)");
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug)");
+            $conn->exec("CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)");
+        } catch (Exception $e) {}
+
+    } catch (Exception $e) {
+        error_log("Auto-update failed: " . $e->getMessage());
+    }
 }
 
 function get_categories_with_counts() {

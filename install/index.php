@@ -8,22 +8,34 @@ $success = '';
 if (file_exists(__DIR__ . '/../includes/config.php')) {
     include __DIR__ . '/../includes/config.php';
     if (defined('INSTALLED') && INSTALLED && $stage != 4) {
-        // Check if database actually has site_settings table
         require_once __DIR__ . '/../includes/db.php';
+        require_once __DIR__ . '/../includes/functions.php';
         $conn = get_db_connection();
-        $table_exists = false;
         if ($conn) {
-            try {
-                $count = $conn->query("SELECT COUNT(*) FROM site_settings")->fetchColumn();
-                if ($count > 0) {
-                    $table_exists = true;
-                }
-            } catch (Exception $e) {
-                $table_exists = false;
-            }
-        }
-        if ($table_exists) {
-            header('Location: /');
+            auto_update_database();
+            // Installation Lock Screen
+            ?>
+            <!DOCTYPE html>
+            <html lang="en" data-bs-theme="dark">
+            <head>
+                <meta charset="UTF-8">
+                <title>Installation Locked & System Updated</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>body{background:#05070a;color:#fff;font-family:sans-serif;padding-top:100px;}</style>
+            </head>
+            <body>
+            <div class="container text-center col-md-6">
+                <div class="card bg-dark border-secondary p-5 shadow-lg">
+                    <div class="display-1 text-primary mb-3">🔒</div>
+                    <h2 class="text-white mb-3">System Updated & Installation Locked</h2>
+                    <p class="text-white-50">This website is already installed and fully configured. All database schemas and system files have been updated to the latest version automatically.</p>
+                    <hr class="border-secondary my-4">
+                    <a href="/" class="btn btn-primary py-3 fw-bold">Return to Website</a>
+                </div>
+            </div>
+            </body>
+            </html>
+            <?php
             exit;
         }
     }
