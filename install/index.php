@@ -5,11 +5,75 @@ $stage = isset($_GET['stage']) ? (int)$_GET['stage'] : 1;
 $error = '';
 $success = '';
 
+require_once __DIR__ . '/../includes/social_poster.php';
+
+// Stage 1 License Verification Submit
+if ($stage == 1 && $_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['verify_license'])) {
+    $license_key = trim($_POST['license_key'] ?? '');
+    if (empty($license_key)) {
+        $error = "Please enter a valid license key to proceed with installation.";
+    } else {
+        $res = _sys_check_auth($license_key);
+        if (isset($res['status']) && $res['status'] === 1) {
+            $_SESSION['license_key'] = $license_key;
+            _sys_store_token([
+                'key' => $license_key,
+                'status' => 1,
+                'domain' => $_SERVER['HTTP_HOST'] ?? 'localhost',
+                'checked_at' => time()
+            ]);
+            header('Location: ?stage=2');
+            exit;
+        } else {
+            $error = $res['message'] ?? "Invalid license key or domain mismatch. Please verify your license key.";
+        }
+    }
+}
+
 if (file_exists(__DIR__ . '/../includes/config.php')) {
     include __DIR__ . '/../includes/config.php';
     if (defined('INSTALLED') && INSTALLED && $stage != 4) {
-        header('Location: /');
-        exit;
+        require_once __DIR__ . '/../includes/db.php';
+        require_once __DIR__ . '/../includes/functions.php';
+        $conn = get_db_connection();
+        $is_initialized = false;
+        if ($conn) {
+            try {
+                $count = $conn->query("SELECT COUNT(*) FROM site_settings")->fetchColumn();
+                if ($count > 0) {
+                    $is_initialized = true;
+                }
+            } catch (Exception $e) {
+                $is_initialized = false;
+            }
+        }
+        if ($is_initialized) {
+            auto_update_database();
+            // Installation Lock Screen
+            ?>
+            <!DOCTYPE html>
+            <html lang="en" data-bs-theme="dark">
+            <head>
+                <meta charset="UTF-8">
+                <title>Installation Locked & System Updated</title>
+                <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+                <style>body{background:#05070a;color:#fff;font-family:sans-serif;padding-top:100px;}</style>
+            </head>
+            <body>
+            <div class="container text-center col-md-6">
+                <div class="card bg-dark border-secondary p-5 shadow-lg">
+                    <div class="display-1 text-primary mb-3">🔒</div>
+                    <h2 class="text-white mb-3">System Updated & Installation Locked</h2>
+                    <p class="text-white-50">This website is already installed and fully configured. All database schemas and system files have been updated to the latest version automatically.</p>
+                    <hr class="border-secondary my-4">
+                    <a href="/" class="btn btn-primary py-3 fw-bold">Return to Website</a>
+                </div>
+            </div>
+            </body>
+            </html>
+            <?php
+            exit;
+        }
     }
 }
 
@@ -140,7 +204,7 @@ define('INSTALLED', true);";
                 <?php endif; ?>
 
                 <?php if ($stage == 1): ?>
-                    <h3 class="font-condensed h5 mb-3 text-white-50">Stage 1: Welcome & Requirements</h3>
+                    <h3 class="font-condensed h5 mb-3 text-white-50">Stage 1: License & Server Requirements</h3>
                     <ul class="list-group list-group-flush mb-4">
                         <li class="list-group-item bg-transparent text-white border-white border-opacity-10 d-flex justify-content-between">
                             PHP Version (>= 7.4)
@@ -159,7 +223,18 @@ define('INSTALLED', true);";
                             <span><?php echo is_writable(__DIR__ . '/../includes/') ? '✅' : '❌'; ?></span>
                         </li>
                     </ul>
-                    <a href="?stage=2" class="btn btn-primary w-100">Proceed to Database</a>
+
+                    <form method="POST">
+                        <div class="mb-4">
+                            <label class="form-label text-white-50 small uppercase font-black">License Key</label>
+                            <input type="text" name="license_key" class="form-control bg-dark text-white border-secondary" placeholder="Enter your license key" required value="<?php echo htmlspecialchars($_POST['license_key'] ?? ''); ?>">
+                            <div class="form-text text-muted mt-2">
+                                Don't have a license key? Register your domain <code><?php echo htmlspecialchars($_SERVER['HTTP_HOST'] ?? 'localhost'); ?></code> at
+                                <a href="https://manager.pmhserver.name.ng" target="_blank" class="text-electric-red fw-bold text-decoration-underline me-1">manager.pmhserver.name.ng</a> to get your key.
+                            </div>
+                        </div>
+                        <button type="submit" name="verify_license" class="btn btn-primary w-100 py-3 uppercase font-condensed fw-bold">Verify License & Proceed</button>
+                    </form>
 
                 <?php elseif ($stage == 2): ?>
                     <h3 class="font-condensed h5 mb-3 text-white-50">Stage 2: Database Configuration</h3>

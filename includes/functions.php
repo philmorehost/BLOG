@@ -1,5 +1,15 @@
 <?php
 require_once __DIR__ . '/db.php';
+
+if (!defined('SITE_URL')) {
+    if (isset($_SERVER['HTTP_HOST'])) {
+        $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        define('SITE_URL', $scheme . '://' . $_SERVER['HTTP_HOST']);
+    } else {
+        define('SITE_URL', 'http://localhost');
+    }
+}
+
 require_once __DIR__ . '/social_poster.php';
 
 function get_settings() {
@@ -8,12 +18,27 @@ function get_settings() {
 
     $conn = get_db_connection();
     if (!$conn) return [
-        'name' => 'FOOTBALL INTELLIGENCE',
+        'name' => 'BLOGEASY',
         'logo' => '',
         'favicon' => ''
     ];
-    $stmt = $conn->query("SELECT * FROM site_settings WHERE id = 1");
-    $settings = $stmt->fetch();
+    try {
+        $stmt = $conn->query("SELECT * FROM site_settings WHERE id = 1");
+        $settings = $stmt->fetch();
+        if (!$settings) {
+            if (php_sapi_name() !== 'cli' && !headers_sent()) {
+                header("Location: /install/");
+                exit;
+            }
+        }
+    } catch (PDOException $e) {
+        // Table site_settings does not exist or database is uninitialized.
+        if (php_sapi_name() !== 'cli' && !headers_sent()) {
+            header("Location: /install/");
+            exit;
+        }
+        $settings = false;
+    }
 
     if ($settings && !array_key_exists('header_code', $settings)) {
         try {
@@ -51,11 +76,16 @@ function get_settings() {
     } catch (Exception $e) {
         try {
             $conn->exec("ALTER TABLE categories ADD COLUMN slug VARCHAR(100)");
+        } catch (Exception $ex) {}
+
+        try {
             // Populate slugs for existing categories
             $all_cats = $conn->query("SELECT id, name FROM categories")->fetchAll();
-            foreach ($all_cats as $c) {
-                $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $c['name'])));
-                $conn->prepare("UPDATE categories SET slug = ? WHERE id = ?")->execute([$slug, $c['id']]);
+            if ($all_cats) {
+                foreach ($all_cats as $c) {
+                    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $c['name'])));
+                    $conn->prepare("UPDATE categories SET slug = ? WHERE id = ?")->execute([$slug, $c['id']]);
+                }
             }
         } catch (Exception $ex) {}
     }
@@ -119,12 +149,151 @@ function get_settings() {
         }
     }
 
+    auto_update_database();
+
     $settings = $settings ?: [
-        'name' => 'FOOTBALL INTELLIGENCE',
+        'name' => 'BLOGEASY',
         'logo' => '',
         'favicon' => ''
     ];
     return $settings;
+}
+
+/**
+ * Intelligent Auto-Update System for Database Schema and Upgrades.
+ */
+function auto_update_database() {
+    static $updated = false;
+    if ($updated) return;
+    $updated = true;
+
+    $conn = get_db_connection();
+    if (!$conn) return;
+
+    try {
+        $driver = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
+
+        // 1. Ensure core tables exist
+        try {
+            $conn->query("SELECT 1 FROM site_settings LIMIT 1");
+        } catch (Exception $e) {
+            if ($driver === 'sqlite') {
+                if (file_exists(__DIR__ . '/../install/schema_sqlite.sql')) {
+                    $schema = file_get_contents(__DIR__ . '/../install/schema_sqlite.sql');
+                    $conn->exec($schema);
+                }
+            } else {
+                if (file_exists(__DIR__ . '/../install/schema.sql')) {
+                    $schema = file_get_contents(__DIR__ . '/../install/schema.sql');
+                    $conn->exec($schema);
+                }
+            }
+        }
+
+        // 2. Column Auto-Migrations
+        $columns_map = [
+            'site_settings' => [
+                'header_code TEXT',
+                'footer_code TEXT',
+                'footer_about TEXT',
+                'taxonomy_migrated BOOLEAN DEFAULT FALSE',
+                'theme VARCHAR(50) DEFAULT \'news\'',
+                'section_priority_title VARCHAR(255) DEFAULT \'Priority Intelligence\'',
+                'section_latest_title VARCHAR(255) DEFAULT \'Latest Intelligence\'',
+                'section_football_title VARCHAR(255) DEFAULT \'Football News\'',
+                'section_transfer_title VARCHAR(255) DEFAULT \'Transfer Intelligence\'',
+                'section_primary_cat VARCHAR(100) DEFAULT \'Football News\'',
+                'section_secondary_cat VARCHAR(100) DEFAULT \'Transfer News\'',
+                'section_third_cat VARCHAR(100)',
+                'section_fourth_cat VARCHAR(100)',
+                'section_third_title VARCHAR(255) DEFAULT \'Featured Reports\'',
+                'section_fourth_title VARCHAR(255) DEFAULT \'Analysis & Insights\'',
+                'featured_cat1_name VARCHAR(100)',
+                'featured_cat1_image VARCHAR(255)',
+                'featured_cat1_title VARCHAR(255)',
+                'featured_cat2_name VARCHAR(100)',
+                'featured_cat2_image VARCHAR(255)',
+                'featured_cat2_title VARCHAR(255)',
+                'featured_cat3_name VARCHAR(100)',
+                'featured_cat3_image VARCHAR(255)',
+                'featured_cat3_title VARCHAR(255)',
+                'featured_cat4_name VARCHAR(100)',
+                'featured_cat4_image VARCHAR(255)',
+                'featured_cat4_title VARCHAR(255)',
+                'enable_live_feed BOOLEAN DEFAULT TRUE',
+                'enable_standings BOOLEAN DEFAULT TRUE',
+                'banner_sec1_title VARCHAR(255)',
+                'banner_sec1_text TEXT',
+                'banner_sec1_image VARCHAR(255)',
+                'banner_sec1_btn1_text VARCHAR(100)',
+                'banner_sec1_btn1_url VARCHAR(255)',
+                'banner_sec1_btn2_text VARCHAR(100)',
+                'banner_sec1_btn2_url VARCHAR(255)',
+                'banner_sec2_title VARCHAR(255)',
+                'banner_sec2_text TEXT',
+                'banner_sec2_image VARCHAR(255)',
+                'banner_sec2_btn1_text VARCHAR(100)',
+                'banner_sec2_btn1_url VARCHAR(255)',
+                'banner_sec2_btn2_text VARCHAR(100)',
+                'banner_sec2_btn2_url VARCHAR(255)'
+            ],
+            'posts' => ['source_url VARCHAR(255)', 'video_url VARCHAR(255)'],
+            'categories' => ['slug VARCHAR(100)'],
+            'pages' => ['is_external BOOLEAN DEFAULT FALSE', 'external_url VARCHAR(255)'],
+            'users' => ['bio TEXT', 'twitter_url VARCHAR(255)', 'linkedin_url VARCHAR(255)', 'avatar VARCHAR(255)']
+        ];
+
+        foreach ($columns_map as $table => $cols) {
+            foreach ($cols as $col_def) {
+                $col_name = explode(' ', trim($col_def))[0];
+                try {
+                    $conn->query("SELECT $col_name FROM $table LIMIT 1");
+                } catch (Exception $e) {
+                    try {
+                        $conn->exec("ALTER TABLE $table ADD COLUMN $col_def");
+                    } catch (Exception $ex) {}
+                }
+            }
+        }
+
+        // 3. Populate missing category slugs
+        try {
+            $cats = $conn->query("SELECT id, name FROM categories WHERE slug IS NULL OR slug = ''")->fetchAll();
+            if ($cats) {
+                foreach ($cats as $c) {
+                    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $c['name'])));
+                    $conn->prepare("UPDATE categories SET slug = ? WHERE id = ?")->execute([$slug, $c['id']]);
+                }
+            }
+        } catch (Exception $e) {}
+
+        // 4. Create Indexes
+        if ($driver === 'sqlite') {
+            try {
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug)");
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category)");
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_publish_date ON posts(publish_date)");
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug)");
+                $conn->exec("CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)");
+            } catch (Exception $e) {}
+        } else {
+            $indexes = [
+                "CREATE INDEX idx_posts_slug ON posts(slug)",
+                "CREATE INDEX idx_posts_category ON posts(category)",
+                "CREATE INDEX idx_posts_publish_date ON posts(publish_date)",
+                "CREATE INDEX idx_pages_slug ON pages(slug)",
+                "CREATE INDEX idx_categories_slug ON categories(slug)"
+            ];
+            foreach ($indexes as $idx_sql) {
+                try {
+                    $conn->exec($idx_sql);
+                } catch (Exception $e) {}
+            }
+        }
+
+    } catch (Exception $e) {
+        error_log("Auto-update failed: " . $e->getMessage());
+    }
 }
 
 function get_categories_with_counts() {
@@ -137,12 +306,27 @@ function get_categories_with_counts() {
         ['name' => 'TRANSFER NEWS', 'post_count' => 3],
         ['name' => 'MATCH ANALYSIS', 'post_count' => 8]
     ];
-    $stmt = $conn->query("SELECT c.id, c.name, c.slug, COUNT(p.id) as post_count
-                          FROM categories c
-                          LEFT JOIN posts p ON c.name = p.category
-                          GROUP BY c.id, c.name, c.slug
-                          ORDER BY c.name ASC");
-    $categories = $stmt->fetchAll();
+
+    try {
+        $stmt = $conn->query("SELECT c.id, c.name, c.slug, COUNT(p.id) as post_count
+                              FROM categories c
+                              LEFT JOIN posts p ON c.name = p.category
+                              GROUP BY c.id, c.name, c.slug
+                              ORDER BY c.name ASC");
+        $categories = $stmt->fetchAll();
+    } catch (Exception $e) {
+        try {
+            $conn->exec("ALTER TABLE categories ADD COLUMN slug VARCHAR(100)");
+            $stmt = $conn->query("SELECT c.id, c.name, c.slug, COUNT(p.id) as post_count
+                                  FROM categories c
+                                  LEFT JOIN posts p ON c.name = p.category
+                                  GROUP BY c.id, c.name, c.slug
+                                  ORDER BY c.name ASC");
+            $categories = $stmt->fetchAll();
+        } catch (Exception $ex) {
+            $categories = [];
+        }
+    }
     return $categories;
 }
 
@@ -341,7 +525,7 @@ function send_mail($to, $subject, $message) {
 
 function render_email_template($content, $subtitle = 'Intelligence Protocol Active') {
     $settings = get_settings();
-    $site_name = $settings['name'] ?? 'FOOTBALL INTELLIGENCE';
+    $site_name = $settings['name'] ?? 'BLOGEASY';
     $year = date('Y');
 
     return "
@@ -506,17 +690,23 @@ function get_ai_insight($prompt) {
  */
 function get_rss_feed_urls() {
     return [
-        'https://www.skysports.com/rss/12040', // Sky Sports Football
-        'https://www.espn.com/espn/rss/soccer/news', // ESPN Soccer
-        'https://www.bbc.com/sport/football/rss.xml', // BBC Football
-        'https://www.theguardian.com/football/rss', // The Guardian Football
-        'https://sport.sky.ch/feed', // Sky Sport CH (Euro focus)
-        'https://www.france24.com/en/sports/rss', // France24 Sports
-        'https://talksport.com/football/feed/', // TalkSport Football
-        'https://www.caughtoffside.com/feed/', // CaughtOffside (Transfer Rumours)
-        'https://www.football-espana.net/feed', // Football Espana
-        'https://www.football-italia.net/feed', // Football Italia
-        'https://news.google.com/rss/search?q=football+transfers+premier+league+la+liga+serie+a+ligue+1+bundesliga&hl=en-GB&gl=GB&ceid=GB:en' // Google News Football Search
+        // Nigeria News Feeds
+        'https://vanguardngr.com/feed/', // Vanguard Nigeria
+        'https://punchng.com/feed/', // Punch Newspaper
+        'https://premiumtimesng.com/feed', // Premium Times
+        'https://dailytrust.com/feed/', // Daily Trust
+        'https://channelsng.com/feed/', // Channels TV Nigeria
+        'https://guardian.ng/feed/', // The Guardian Nigeria
+
+        // World & Global News Feeds
+        'http://rss.cnn.com/rss/edition.rss', // CNN Top News
+        'http://rss.cnn.com/rss/edition_world.rss', // CNN World News
+        'https://www.aljazeera.com/xml/rss/all.xml', // Al Jazeera English
+        'https://feeds.bbci.co.uk/news/rss.xml', // BBC News
+        'https://feeds.bbci.co.uk/news/world/rss.xml', // BBC World News
+        'https://www.france24.com/en/rss', // France24 World
+        'https://www.theguardian.com/world/rss', // The Guardian World
+        'https://news.google.com/rss/search?q=Nigeria+news+or+world+news&hl=en-NG&gl=NG&ceid=NG:en' // Google News Nigeria/World
     ];
 }
 
@@ -676,7 +866,7 @@ function fetch_image($url) {
  * @return string|false Path to uploaded file relative to root, or false on failure.
  */
 function upload_image($file, $target_subpath = 'uploads/') {
-    if (empty($file['name']) || $file['error'] !== UPLOAD_ERR_OK) return false;
+    if (empty($file) || !is_array($file) || empty($file['name']) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return false;
 
     $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'ico'];
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
@@ -697,9 +887,37 @@ function upload_image($file, $target_subpath = 'uploads/') {
     return false;
 }
 
-// Basic Markdown to HTML
+// Basic Markdown / HTML Renderer
 function parse_markdown($text) {
     if (empty($text)) return '';
+
+    // Check if $text contains HTML tags or Gutenberg comments
+    $is_html = (preg_match('/<[a-z1-6][^>]*>/i', $text) || strpos($text, '<!-- wp:') !== false);
+
+    if ($is_html) {
+        // Strip Gutenberg comments
+        $text = preg_replace('/<!--\s*\/?wp:.*?-->/s', '', $text);
+
+        // Decode HTML numeric/named entities (e.g. &#8217; to ’)
+        $text = html_entity_decode($text, ENT_QUOTES | ENT_HTML5, 'UTF-8');
+
+        // Style Gutenberg and generic HTML tags
+        $text = str_replace('<p class="wp-block-paragraph">', '<p class="mb-4 leading-relaxed">', $text);
+        $text = str_replace('<ul class="wp-block-list">', '<ul class="list-disc ms-6 mb-4 space-y-2">', $text);
+        $text = str_replace('<ol class="wp-block-list">', '<ol class="list-decimal ms-6 mb-4 space-y-2">', $text);
+        $text = preg_replace('/<ol start="(\d+)" class="wp-block-list">/i', '<ol start="$1" class="list-decimal ms-6 mb-4 space-y-2">', $text);
+
+        // Ensure unstyled paragraph, list, and heading tags get consistent styling
+        $text = preg_replace('/<p(?![^>]*class=)>/i', '<p class="mb-4 leading-relaxed">', $text);
+        $text = preg_replace('/<ul(?![^>]*class=)>/i', '<ul class="list-disc ms-6 mb-4 space-y-2">', $text);
+        $text = preg_replace('/<ol(?![^>]*class=)>/i', '<ol class="list-decimal ms-6 mb-4 space-y-2">', $text);
+        $text = preg_replace('/<h2(?![^>]*class=)>/i', '<h2 class="h3 font-condensed fw-black text-electric-red mt-4 mb-3 uppercase italic">', $text);
+        $text = preg_replace('/<h3(?![^>]*class=)>/i', '<h3 class="h4 font-condensed fw-black text-white mt-4 mb-2 uppercase italic">', $text);
+
+        return $text;
+    }
+
+    // Markdown Parser
     $text = htmlspecialchars($text);
 
     // Headers
@@ -716,7 +934,6 @@ function parse_markdown($text) {
         $block = trim($block);
         if (empty($block)) continue;
 
-        // If it doesn't start with a header tag or table, wrap in <p>
         if (!preg_match('/^<(h2|h3|div|table)/i', $block)) {
             $html_blocks[] = '<p class="mb-4 leading-relaxed">' . nl2br($block) . '</p>';
         } else {
@@ -831,4 +1048,83 @@ function update_sitemap() {
     $xml .= '</urlset>';
 
     file_put_contents(__DIR__ . '/../sitemap.xml', $xml);
+    update_llms_txt();
+}
+
+/**
+ * Generates llms.txt and llms-full.txt for AI Visibility.
+ */
+function update_llms_txt() {
+    $settings = get_settings();
+    $site_name = $settings['name'] ?? 'BLOGEASY';
+    $site_tagline = $settings['tagline'] ?? 'General News & Intelligence Network';
+
+    if (defined('SITE_URL') && !empty(SITE_URL)) {
+        $site_url = rtrim(SITE_URL, '/');
+    } else {
+        $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $site_url = $scheme . '://' . $host;
+    }
+
+    $conn = get_db_connection();
+    if (!$conn) return;
+
+    // Build llms.txt (Concise / Summary AI Visibility)
+    $txt = "# {$site_name}\n\n";
+    $txt .= "> {$site_tagline}\n\n";
+    $txt .= "Website: {$site_url}\n";
+    $txt .= "Sitemap: {$site_url}/sitemap.xml\n\n";
+    $txt .= "## Key Pages\n";
+    $txt .= "- [Home]({$site_url}/): Latest news and featured reports\n";
+
+    // Static pages
+    $pages = $conn->query("SELECT title, slug, meta_description FROM pages WHERE is_visible = 1 AND is_external = 0 ORDER BY id ASC")->fetchAll();
+    foreach ($pages as $p) {
+        $desc = !empty($p['meta_description']) ? ": " . $p['meta_description'] : "";
+        $txt .= "- [{$p['title']}]({$site_url}/{$p['slug']}){$desc}\n";
+    }
+
+    $txt .= "\n## Main Categories\n";
+    $categories = $conn->query("SELECT name, slug FROM categories ORDER BY name ASC")->fetchAll();
+    foreach ($categories as $cat) {
+        $txt .= "- [{$cat['name']}]({$site_url}/category/{$cat['slug']})\n";
+    }
+
+    $txt .= "\n## Recent News Articles\n";
+    $posts = $conn->query("SELECT title, slug, excerpt, publish_date FROM posts WHERE is_scheduled = 0 OR publish_date <= CURRENT_TIMESTAMP ORDER BY publish_date DESC LIMIT 30")->fetchAll();
+    foreach ($posts as $post) {
+        $excerpt = !empty($post['excerpt']) ? " - " . str_replace(["\r", "\n"], " ", strip_tags($post['excerpt'])) : "";
+        $txt .= "- [{$post['title']}]({$site_url}/post/{$post['slug']}){$excerpt}\n";
+    }
+
+    file_put_contents(__DIR__ . '/../llms.txt', $txt);
+
+    // Build llms-full.txt (Comprehensive / Full Content AI Visibility)
+    $full = "# {$site_name} - Full LLM Context Digest\n\n";
+    $full .= "> {$site_tagline}\n";
+    $full .= "Canonical Domain: {$site_url}\n";
+    $full .= "Generated Date: " . date('Y-m-d H:i:s T') . "\n\n";
+
+    $full .= "--- \n\n";
+    $full .= "## Site Categories\n";
+    foreach ($categories as $cat) {
+        $full .= "### {$cat['name']}\nURL: {$site_url}/category/{$cat['slug']}\n\n";
+    }
+
+    $full .= "--- \n\n";
+    $full .= "## Complete Articles Index\n\n";
+    $all_posts = $conn->query("SELECT id, title, slug, category, author, publish_date, excerpt, content FROM posts ORDER BY publish_date DESC LIMIT 200")->fetchAll();
+    foreach ($all_posts as $p) {
+        $full .= "### " . clean_utf8($p['title']) . "\n";
+        $full .= "- URL: {$site_url}/post/{$p['slug']}\n";
+        $full .= "- Category: {$p['category']}\n";
+        $full .= "- Author: {$p['author']}\n";
+        $full .= "- Date: {$p['publish_date']}\n\n";
+        $full .= "#### Summary\n" . clean_utf8($p['excerpt']) . "\n\n";
+        $full .= "#### Full Content\n" . clean_utf8(strip_tags($p['content'])) . "\n\n";
+        $full .= "---\n\n";
+    }
+
+    file_put_contents(__DIR__ . '/../llms-full.txt', $full);
 }

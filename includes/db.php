@@ -7,6 +7,9 @@ if (!file_exists(__DIR__ . '/config.php')) {
 require_once __DIR__ . '/config.php';
 
 function get_db_connection() {
+    if (!defined('DB_HOST') && !defined('DB_TYPE')) {
+        return null;
+    }
     try {
         if (defined('DB_TYPE') && DB_TYPE === 'sqlite') {
             $conn = new PDO("sqlite:" . __DIR__ . "/../database.sqlite");

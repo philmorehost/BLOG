@@ -8,6 +8,20 @@ if (isset($_GET['delete'])) {
     $success = "Page decommissioned.";
 }
 
+// Handle Bulk Deletion
+if (isset($_POST['bulk_delete_pages']) && !empty($_POST['selected_pages'])) {
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF Token Validation Failed");
+    }
+    $ids = array_map('intval', $_POST['selected_pages']);
+    if (!empty($ids)) {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $conn->prepare("DELETE FROM pages WHERE id IN ($placeholders)");
+        $stmt->execute($ids);
+        $success = count($ids) . " pages decommissioned in bulk.";
+    }
+}
+
 // Handle Save
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_page'])) {
     if (!verify_csrf_token($_POST['csrf_token'])) {
@@ -62,6 +76,7 @@ $pages = $stmt->fetchAll();
             <input type="text" name="search" value="<?php echo htmlspecialchars($search); ?>" placeholder="SEARCH PAGES..." class="bg-black border border-white/10 rounded-xl px-4 py-2 text-white font-condensed italic small w-64 focus:border-danger outline-none transition-all">
             <button type="submit" class="position-absolute end-0 top-0 h-100 px-3 text-white-50 hover:text-danger"><i class="bi bi-search"></i></button>
         </form>
+        <button type="button" id="bulkDeletePagesBtn" class="btn btn-outline-danger font-condensed fw-black italic px-4 py-2 d-none" onclick="confirmBulkDeletePages()">BULK DELETE</button>
         <button class="btn btn-outline-danger font-condensed fw-black italic px-4 py-2" data-bs-toggle="modal" data-bs-target="#pageModal">NEW PAGE</button>
     </div>
 </div>
@@ -71,10 +86,16 @@ $pages = $stmt->fetchAll();
 <?php endif; ?>
 
 <div class="bg-[#0a0e17] rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
+    <form id="bulkFormPages" method="POST">
+    <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
+    <input type="hidden" name="bulk_delete_pages" value="1">
     <div class="table-responsive">
         <table class="table table-dark table-hover mb-0 align-middle">
             <thead class="bg-black">
                 <tr>
+                    <th class="ps-5 py-4 border-0" style="width: 40px;">
+                        <input type="checkbox" id="selectAllPages" class="form-check-input bg-black border-white/20">
+                    </th>
                     <th class="px-5 py-4 text-[10px] font-black uppercase text-secondary tracking-widest border-0">Title / Slug</th>
                     <th class="px-4 py-4 text-[10px] font-black uppercase text-secondary tracking-widest border-0">Position</th>
                     <th class="px-4 py-4 text-[10px] font-black uppercase text-secondary tracking-widest border-0 text-center">Status</th>
@@ -84,6 +105,9 @@ $pages = $stmt->fetchAll();
             <tbody>
                 <?php foreach ($pages as $p): ?>
                 <tr>
+                    <td class="ps-5 py-4 border-white border-opacity-5">
+                        <input type="checkbox" name="selected_pages[]" value="<?php echo $p['id']; ?>" class="form-check-input bg-black border-white/20 page-checkbox">
+                    </td>
                     <td class="px-5 py-4 border-white border-opacity-5">
                         <div class="text-white font-bold small uppercase italic"><?php echo $p['title']; ?></div>
                         <div class="text-[10px] text-gray-500 font-mono italic">/<?php echo $p['slug']; ?></div>
@@ -100,7 +124,7 @@ $pages = $stmt->fetchAll();
                     </td>
                     <td class="px-5 py-4 border-white border-opacity-5 text-end">
                         <div class="d-flex justify-content-end gap-3">
-                            <button class="btn btn-sm btn-outline-light border-0 edit-page"
+                            <button type="button" class="btn btn-sm btn-outline-light border-0 edit-page"
                                 data-id="<?php echo $p['id']; ?>"
                                 data-title="<?php echo htmlspecialchars($p['title']); ?>"
                                 data-slug="<?php echo htmlspecialchars($p['slug']); ?>"
@@ -125,6 +149,7 @@ $pages = $stmt->fetchAll();
             </tbody>
         </table>
     </div>
+    </form>
 </div>
 
 <!-- Page Modal -->
@@ -149,7 +174,7 @@ $pages = $stmt->fetchAll();
                             <input type="text" name="slug" id="page_slug" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl" required>
                         </div>
                         <div class="col-md-12">
-                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown Supported)</label>
+                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown & HTML Supported)</label>
                             <textarea name="content" id="page_content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl font-mono"></textarea>
                         </div>
                         <div class="col-md-4">
@@ -203,6 +228,38 @@ $pages = $stmt->fetchAll();
 </div>
 
 <script>
+const selectAllPages = document.getElementById('selectAllPages');
+const pageCheckboxes = document.querySelectorAll('.page-checkbox');
+const bulkDeletePagesBtn = document.getElementById('bulkDeletePagesBtn');
+const bulkFormPages = document.getElementById('bulkFormPages');
+
+if (selectAllPages) {
+    selectAllPages.addEventListener('change', function() {
+        pageCheckboxes.forEach(cb => cb.checked = this.checked);
+        toggleBulkDeletePagesBtn();
+    });
+}
+
+pageCheckboxes.forEach(cb => {
+    cb.addEventListener('change', toggleBulkDeletePagesBtn);
+});
+
+function toggleBulkDeletePagesBtn() {
+    const checkedCount = document.querySelectorAll('.page-checkbox:checked').length;
+    if (checkedCount > 0) {
+        bulkDeletePagesBtn.classList.remove('d-none');
+    } else {
+        bulkDeletePagesBtn.classList.add('d-none');
+    }
+}
+
+function confirmBulkDeletePages() {
+    const checkedCount = document.querySelectorAll('.page-checkbox:checked').length;
+    if (confirm(`Are you sure you want to permanently delete ${checkedCount} pages?`)) {
+        bulkFormPages.submit();
+    }
+}
+
 document.querySelectorAll('.edit-page').forEach(button => {
     button.addEventListener('click', function() {
         document.getElementById('page_id').value = this.dataset.id;

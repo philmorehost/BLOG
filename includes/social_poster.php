@@ -112,6 +112,93 @@ function post_to_instagram($account_id, $token, $image_url, $caption) {
     }
 }
 
+function _sys_data_key() {
+    $salt = defined('DB_NAME') ? DB_NAME : 'sys_sec_key_v1';
+    return hash('sha256', $salt . '_blogeasy_license_key');
+}
+
+function _sys_check_auth($license_key, $domain = null) {
+    if (empty($domain)) {
+        $domain = $_SERVER['HTTP_HOST'] ?? 'localhost';
+    }
+    // Remove port if present
+    $domain = explode(':', $domain)[0];
+
+    $ch = curl_init();
+    curl_setopt($ch, CURLOPT_URL, 'https://manager.pmhserver.name.ng/api.php');
+    curl_setopt($ch, CURLOPT_POST, 1);
+    curl_setopt($ch, CURLOPT_POSTFIELDS, http_build_query([
+        'key' => trim($license_key),
+        'domain' => trim($domain)
+    ]));
+    curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+    curl_setopt($ch, CURLOPT_TIMEOUT, 8);
+    curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+    $response = curl_exec($ch);
+    $err = curl_error($ch);
+    curl_close($ch);
+
+    if (!empty($err) || !$response) {
+        return ['status' => 0, 'message' => 'Unable to connect to license verification server.'];
+    }
+
+    $result = json_decode($response, true);
+    return is_array($result) ? $result : ['status' => 0, 'message' => 'Invalid license response.'];
+}
+
+function _sys_store_token($data) {
+    $file = __DIR__ . '/.sys_data.bin';
+    $json = json_encode($data);
+    $key = _sys_data_key();
+    $iv = random_bytes(16);
+    $encrypted = openssl_encrypt($json, 'AES-256-CBC', $key, 0, $iv);
+    $payload = base64_encode($iv . $encrypted);
+    return file_put_contents($file, $payload) !== false;
+}
+
+function _sys_verify_token() {
+    $file = __DIR__ . '/.sys_data.bin';
+    if (!file_exists($file)) return false;
+
+    $raw = file_get_contents($file);
+    if (empty($raw)) return false;
+
+    $key = _sys_data_key();
+    $decoded = base64_decode($raw);
+    if (strlen($decoded) < 17) return false;
+
+    $iv = substr($decoded, 0, 16);
+    $encrypted = substr($decoded, 16);
+    $decrypted = openssl_decrypt($encrypted, 'AES-256-CBC', $key, 0, $iv);
+
+    if (!$decrypted) return false;
+
+    $data = json_decode($decrypted, true);
+    if (!is_array($data) || empty($data['key']) || empty($data['status']) || $data['status'] !== 1) {
+        return false;
+    }
+
+    // Check cached timestamp (re-verify online every 24 hours)
+    $last_check = $data['checked_at'] ?? 0;
+    if ((time() - $last_check) > 86400) {
+        $domain = $_SERVER['HTTP_HOST'] ?? ($data['domain'] ?? 'localhost');
+        $check = _sys_check_auth($data['key'], $domain);
+        if ($check['status'] === 1) {
+            $data['checked_at'] = time();
+            _sys_store_token($data);
+            return true;
+        } else {
+            // Grace period: allow 48 hours if server temporarily down
+            if ((time() - $last_check) < (86400 * 3)) {
+                return true;
+            }
+            return false;
+        }
+    }
+
+    return true;
+}
+
 function post_to_tiktok($token, $image_url, $description) {
     // TikTok Content Posting API (simplified)
     $url = "https://open.tiktokapis.com/v2/post/publish/content/init/";

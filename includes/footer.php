@@ -26,7 +26,7 @@
             <div class="row g-5">
                 <div class="col-lg-4">
                     <h3 class="font-condensed fw-black italic text-white mb-4 fs-4"><?php echo format_site_title($settings['name'] ?? 'FootballIntelligence'); ?></h3>
-                    <p class="text-white-50 small leading-relaxed max-w-sm">The world's most advanced football intelligence network. Real-time decryption of global sports data and tactical analysis.</p>
+                    <p class="text-white-50 small leading-relaxed max-w-sm"><?php echo htmlspecialchars($settings['footer_about'] ?? "The world's most advanced football intelligence network. Real-time decryption of global sports data and tactical analysis."); ?></p>
                 </div>
                 <div class="col-lg-4">
                     <h4 class="font-condensed fw-black text-electric-red mb-3 small tracking-widest">STAY UPDATED</h4>
@@ -42,8 +42,12 @@
                             <h4 class="font-condensed fw-black text-electric-red mb-3 small tracking-widest">CHANNELS</h4>
                             <ul class="list-unstyled small font-bold text-white-50 uppercase">
                                 <li class="mb-2"><a href="/" class="text-decoration-none text-reset hover:text-white transition-all">Latest Reports</a></li>
+                                <?php if (!empty($settings['enable_live_feed'])): ?>
                                 <li class="mb-2"><a href="/watch" class="text-decoration-none text-reset hover:text-white transition-all">Live Feed</a></li>
+                                <?php endif; ?>
+                                <?php if (!empty($settings['enable_standings'])): ?>
                                 <li class="mb-2"><a href="/tables" class="text-decoration-none text-reset hover:text-white transition-all">Standings</a></li>
+                                <?php endif; ?>
                             </ul>
                         </div>
                         <div class="col-md-4">
@@ -79,7 +83,7 @@
         </div>
     </footer>
     <!-- Cookie Consent Banner -->
-    <div id="cookie-consent" class="fixed-bottom p-4 bg-black border-top border-electric-red z-[9999] transition-all duration-500 transform translate-y-full">
+    <div id="cookie-consent" class="fixed-bottom p-4 bg-black border-top border-electric-red z-[9999] transition-all duration-500 transform translate-y-full pointer-events-none">
         <div class="container-fluid px-4">
             <div class="d-flex flex-column flex-md-row align-items-center justify-content-between gap-4">
                 <div class="text-white-50 small font-condensed tracking-wide">
@@ -99,19 +103,21 @@
         document.addEventListener('DOMContentLoaded', function() {
             if (!localStorage.getItem('cookieConsent')) {
                 const banner = document.getElementById('cookie-consent');
-                setTimeout(() => {
-                    banner.classList.remove('translate-y-full');
-                }, 1000);
+                if (banner) {
+                    setTimeout(() => {
+                        banner.classList.remove('translate-y-full', 'pointer-events-none');
+                    }, 500);
 
-                document.getElementById('accept-cookies').onclick = function() {
-                    localStorage.setItem('cookieConsent', 'accepted');
-                    banner.classList.add('translate-y-full');
-                };
+                    document.getElementById('accept-cookies').onclick = function() {
+                        localStorage.setItem('cookieConsent', 'accepted');
+                        banner.classList.add('translate-y-full', 'pointer-events-none');
+                    };
 
-                document.getElementById('decline-cookies').onclick = function() {
-                    localStorage.setItem('cookieConsent', 'declined');
-                    banner.classList.add('translate-y-full');
-                };
+                    document.getElementById('decline-cookies').onclick = function() {
+                        localStorage.setItem('cookieConsent', 'declined');
+                        banner.classList.add('translate-y-full', 'pointer-events-none');
+                    };
+                }
             }
         });
     </script>

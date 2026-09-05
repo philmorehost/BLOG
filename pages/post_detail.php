@@ -115,53 +115,56 @@ $relatedPosts = $stmt_related->fetchAll();
 
 ?>
 <div class="bg-black text-white min-h-screen">
-    <!-- Hero Header -->
-    <div class="relative py-12 md:py-24 overflow-hidden bg-[#05070a] border-bottom border-white/5">
-        <!-- Background Ambient Glow -->
-        <div class="absolute inset-0 opacity-20 pointer-events-none">
-            <img src="<?php echo $post['image']; ?>" class="w-full h-full object-cover blur-[100px] scale-150" alt="">
-        </div>
+    <!-- Header Section -->
+    <div class="py-8 md:py-12 bg-[#05070a] border-bottom border-white/5">
+        <div class="container mx-auto px-4 px-md-6">
+            <div class="max-w-4xl mx-auto">
+                <span class="bg-electric-red text-white px-3 py-1 font-condensed fw-black italic uppercase text-[10px] mb-4 inline-block tracking-[0.2em] rounded">
+                    <?php echo strtoupper($post['category']); ?>
+                </span>
+                <h1 class="font-condensed fw-black italic text-white uppercase tracking-tight text-3xl md:text-5xl leading-tight mb-6">
+                    <?php echo $post['title']; ?>
+                </h1>
 
-        <div class="container mx-auto px-4 px-md-6 relative z-10">
-            <div class="row g-5 align-items-center">
-                <div class="col-lg-7 order-2 order-lg-1">
-                    <span class="bg-electric-red text-white px-4 py-2 font-condensed fw-black italic uppercase text-[10px] mb-6 inline-block tracking-[0.2em] shadow-2xl">GLOBAL EXCLUSIVE</span>
-                    <h1 class="display-4 font-condensed fw-black italic text-white uppercase tracking-tighter leading-[0.9] mb-8"><?php echo $post['title']; ?></h1>
-
-                    <div class="flex flex-wrap items-center gap-4 md:gap-6 text-white-50 font-monospace text-[10px] uppercase tracking-[0.15em]">
-                        <div class="flex items-center gap-2">
-                            <a href="/author/<?php echo urlencode($post['author']); ?>" class="flex items-center gap-2 text-decoration-none text-inherit">
-                                <div class="w-8 h-8 rounded-full bg-electric-red flex items-center justify-center text-white fw-bold italic font-condensed">
-                                    <?php echo substr($post['author'], 0, 1); ?>
-                                </div>
-                                <span>BY <span class="text-white fw-bold"><?php echo $post['author']; ?></span></span>
-                            </a>
-                        </div>
-                        <span class="w-1 h-1 bg-white/20 rounded-full d-none d-md-block"></span>
+                <div class="flex flex-wrap items-center justify-between gap-4 py-4 border-t border-b border-white/10 text-white-50 font-monospace text-[11px] uppercase tracking-wider mb-8">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <a href="/author/<?php echo urlencode($post['author']); ?>" class="flex items-center gap-2 text-decoration-none text-inherit">
+                            <div class="w-7 h-7 rounded-full bg-electric-red flex items-center justify-center text-white fw-bold italic font-condensed text-xs">
+                                <?php echo substr($post['author'], 0, 1); ?>
+                            </div>
+                            <span>BY <span class="text-white fw-bold"><?php echo $post['author']; ?></span></span>
+                        </a>
+                        <span class="text-white/20">•</span>
                         <div class="flex items-center gap-2">
                             <i class="bi bi-calendar3 text-electric-red"></i>
                             <span><?php echo date('M d, Y', strtotime($post['created_at'])); ?></span>
                         </div>
-                        <span class="w-1 h-1 bg-white/20 rounded-full d-none d-md-block"></span>
-                        <div class="flex items-center gap-2">
-                            <i class="bi bi-shield-check text-electric-red"></i>
-                            <span class="text-white"><?php echo strtoupper($post['category']); ?></span>
-                        </div>
+                    </div>
+
+                    <!-- Compact Quick Share -->
+                    <div class="flex items-center gap-2">
+                        <span class="text-[9px] text-gray-500 font-bold me-1">SHARE:</span>
+                        <?php
+                            $p_url = urlencode(SITE_URL . "/post/" . $post['slug']);
+                            $p_title = urlencode($post['title']);
+                        ?>
+                        <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo $p_url; ?>" target="_blank" class="text-white-50 hover:text-white transition-colors" title="Facebook"><i class="bi bi-facebook"></i></a>
+                        <a href="https://twitter.com/intent/tweet?url=<?php echo $p_url; ?>&text=<?php echo $p_title; ?>" target="_blank" class="text-white-50 hover:text-white transition-colors ms-2" title="X"><i class="bi bi-twitter-x"></i></a>
+                        <a href="https://api.whatsapp.com/send?text=<?php echo $p_title . '%20' . $p_url; ?>" target="_blank" class="text-white-50 hover:text-white transition-colors ms-2" title="WhatsApp"><i class="bi bi-whatsapp"></i></a>
                     </div>
                 </div>
-                <div class="col-lg-5 order-1 order-lg-2">
-                    <div class="relative group">
-                        <div class="absolute -inset-1 bg-gradient-to-r from-electric-red to-red-900 rounded-4 blur opacity-25 group-hover:opacity-50 transition duration-1000 group-hover:duration-200"></div>
-                        <div class="relative rounded-4 overflow-hidden border border-white/10 shadow-2xl bg-black">
-                            <img src="<?php echo $post['image']; ?>" class="w-full h-auto max-h-[500px] object-contain transition duration-500 group-hover:scale-105" alt="<?php echo $post['title']; ?>">
-                        </div>
-                    </div>
+
+                <?php if (!empty($post['image'])): ?>
+                <!-- Featured Image - Compact & Responsive -->
+                <div class="rounded-2xl overflow-hidden border border-white/10 shadow-2xl bg-[#0a0e17] mb-8 max-w-3xl mx-auto">
+                    <img src="<?php echo $post['image']; ?>" class="w-full h-auto max-h-[360px] object-cover mx-auto block" alt="<?php echo htmlspecialchars($post['title']); ?>">
                 </div>
+                <?php endif; ?>
             </div>
         </div>
     </div>
 
-    <div class="container mx-auto px-4 px-md-6 py-12">
+    <div class="container mx-auto px-4 px-md-6 py-8">
         <div class="row g-5">
             <div class="col-lg-8">
                 <article class="prose prose-invert prose-red max-w-none">

@@ -15,8 +15,30 @@ if (defined('INSTALLED') && !INSTALLED) {
 require_once __DIR__ . '/includes/db.php';
 
 // Simple Router
-$request = $_SERVER['REQUEST_URI'];
+$request = $_SERVER['REQUEST_URI'] ?? '/';
 $path = rtrim(strtok($request, '?'), '/');
+
+if ($path !== '/install' && strpos($path, '/install/') !== 0) {
+    require_once __DIR__ . '/includes/db.php';
+    require_once __DIR__ . '/includes/functions.php';
+    $conn = get_db_connection();
+    if (!$conn) {
+        header("Location: /install/");
+        exit;
+    }
+
+    try {
+        auto_update_database();
+        $count = $conn->query("SELECT COUNT(*) FROM site_settings")->fetchColumn();
+        if ($count == 0) {
+            header("Location: /install/");
+            exit;
+        }
+    } catch (Exception $e) {
+        header("Location: /install/");
+        exit;
+    }
+}
 
 if (empty($path)) $path = '/';
 
@@ -29,11 +51,23 @@ if ($path == '/' || $path == '' || empty($path)) {
     $_GET['name'] = urldecode($matches[1]);
     include __DIR__ . '/pages/author.php';
 } elseif ($path == '/watch') {
-    include __DIR__ . '/pages/watch.php';
+    $settings = get_settings();
+    if (empty($settings['enable_live_feed'])) {
+        if (!headers_sent()) http_response_code(404);
+        include __DIR__ . '/pages/404.php';
+    } else {
+        include __DIR__ . '/pages/watch.php';
+    }
 } elseif ($path == '/betting') {
     include __DIR__ . '/pages/betting.php';
 } elseif ($path == '/tables' || $path == '/standings') {
-    include __DIR__ . '/pages/tables.php';
+    $settings = get_settings();
+    if (empty($settings['enable_standings'])) {
+        if (!headers_sent()) http_response_code(404);
+        include __DIR__ . '/pages/404.php';
+    } else {
+        include __DIR__ . '/pages/tables.php';
+    }
 } elseif (preg_match('/^\/category\/([^\/]+)$/', $path, $matches)) {
     $cat_identifier = $matches[1];
     // Check if it's a slug or name
@@ -65,6 +99,27 @@ if ($path == '/' || $path == '' || empty($path)) {
         header('Location: /?error=invalid_email');
         exit;
     }
+} elseif ($path == '/llms.txt') {
+    if (!file_exists(__DIR__ . '/llms.txt')) {
+        update_llms_txt();
+    }
+    header('Content-Type: text/plain; charset=utf-8');
+    readfile(__DIR__ . '/llms.txt');
+    exit;
+} elseif ($path == '/llms-full.txt') {
+    if (!file_exists(__DIR__ . '/llms-full.txt')) {
+        update_llms_txt();
+    }
+    header('Content-Type: text/plain; charset=utf-8');
+    readfile(__DIR__ . '/llms-full.txt');
+    exit;
+} elseif ($path == '/sitemap.xml') {
+    if (!file_exists(__DIR__ . '/sitemap.xml')) {
+        update_sitemap();
+    }
+    header('Content-Type: application/xml; charset=utf-8');
+    readfile(__DIR__ . '/sitemap.xml');
+    exit;
 } elseif ($path == '/admin/login' || $path == '/admin/login.php') {
     include __DIR__ . '/admin/login.php';
 } elseif (strpos($path, '/admin') === 0) {

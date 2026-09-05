@@ -9,11 +9,16 @@ if (isset($_GET['delete'])) {
 
 // Handle Bulk Deletion
 if (isset($_POST['bulk_delete_cats']) && !empty($_POST['selected_cats'])) {
-    $ids = $_POST['selected_cats'];
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $stmt = $conn->prepare("DELETE FROM categories WHERE id IN ($placeholders)");
-    $stmt->execute($ids);
-    $success = count($ids) . " taxonomies decommissioned in bulk.";
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF Token Validation Failed");
+    }
+    $ids = array_map('intval', $_POST['selected_cats']);
+    if (!empty($ids)) {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $conn->prepare("DELETE FROM categories WHERE id IN ($placeholders)");
+        $stmt->execute($ids);
+        $success = count($ids) . " taxonomies decommissioned in bulk.";
+    }
 }
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_category'])) {
@@ -31,7 +36,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_category'])) {
         $stmt->execute([$name, $slug, (int)$_POST['id']]);
         $success = "Taxonomy updated.";
     } else {
-        $stmt = $conn->prepare("INSERT IGNORE INTO categories (name, slug) VALUES (?, ?)");
+        $driver = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
+        $sql = ($driver === 'sqlite') ? "INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)" : "INSERT IGNORE INTO categories (name, slug) VALUES (?, ?)";
+        $stmt = $conn->prepare($sql);
         $stmt->execute([$name, $slug]);
         $success = "New taxonomy registered.";
     }

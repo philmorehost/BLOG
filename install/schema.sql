@@ -39,7 +39,12 @@ CREATE TABLE IF NOT EXISTS site_settings (
     tt_client_key VARCHAR(255),
     tt_client_secret VARCHAR(255),
     tt_access_token TEXT,
-    taxonomy_migrated BOOLEAN DEFAULT FALSE
+    taxonomy_migrated BOOLEAN DEFAULT FALSE,
+    theme VARCHAR(50) DEFAULT 'news',
+    section_priority_title VARCHAR(255) DEFAULT 'Priority Intelligence',
+    section_latest_title VARCHAR(255) DEFAULT 'Latest Intelligence',
+    section_football_title VARCHAR(255) DEFAULT 'Football News',
+    section_transfer_title VARCHAR(255) DEFAULT 'Transfer Intelligence'
 );
 
 CREATE TABLE IF NOT EXISTS users (
@@ -106,5 +111,13 @@ CREATE TABLE IF NOT EXISTS pages (
 
 CREATE TABLE IF NOT EXISTS categories (
     id INT PRIMARY KEY AUTO_INCREMENT,
-    name VARCHAR(100) UNIQUE NOT NULL
+    name VARCHAR(100) UNIQUE NOT NULL,
+    slug VARCHAR(100)
 );
+
+CREATE INDEX idx_posts_slug ON posts(slug);
+CREATE INDEX idx_posts_category ON posts(category);
+CREATE INDEX idx_posts_created_at ON posts(created_at);
+CREATE INDEX idx_posts_publish_date ON posts(publish_date);
+CREATE INDEX idx_pages_slug ON pages(slug);
+CREATE INDEX idx_categories_slug ON categories(slug);

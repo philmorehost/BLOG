@@ -11,16 +11,23 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 if (isset($_GET['delete'])) {
     $stmt = $conn->prepare("DELETE FROM posts WHERE id = ?");
     $stmt->execute([(int)$_GET['delete']]);
+    update_sitemap();
     $success = "Report decommissioned.";
 }
 
 // Handle Bulk Deletion
 if (isset($_POST['bulk_delete']) && !empty($_POST['selected_posts'])) {
-    $ids = $_POST['selected_posts'];
-    $placeholders = implode(',', array_fill(0, count($ids), '?'));
-    $stmt = $conn->prepare("DELETE FROM posts WHERE id IN ($placeholders)");
-    $stmt->execute($ids);
-    $success = count($ids) . " reports decommissioned in bulk.";
+    if (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
+        die("CSRF Token Validation Failed");
+    }
+    $ids = array_map('intval', $_POST['selected_posts']);
+    if (!empty($ids)) {
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $conn->prepare("DELETE FROM posts WHERE id IN ($placeholders)");
+        $stmt->execute($ids);
+        update_sitemap();
+        $success = count($ids) . " reports decommissioned in bulk.";
+    }
 }
 
 // Handle Manual Post Submission
@@ -95,6 +102,7 @@ if (isset($_POST['update_manual'])) {
 
     $stmt = $conn->prepare("UPDATE posts SET title = ?, excerpt = ?, content = ?, category = ?, author = ?, image = ?, video_url = ?, is_scheduled = ?, publish_date = ?, tags = ?, meta_title = ?, meta_description = ?, meta_keywords = ?, is_top_story = ? WHERE id = ?");
     if ($stmt->execute([$title, $excerpt, $content, $cat, $author, $image, $video_url, $is_scheduled, $publish_date, $tags, $meta_title, $meta_desc, $meta_keys, $is_top, $id])) {
+        update_sitemap();
         $success = "Report updated successfully.";
     } else {
         $error = "Failed to update report.";
@@ -373,7 +381,7 @@ try {
                         <?php endif; ?>
                     </td>
                     <td class="px-5 py-4 border-white border-opacity-5 text-end">
-                        <button class="btn btn-link text-white-50 hover:text-white p-0 me-3 edit-post"
+                        <button type="button" class="btn btn-link text-white-50 hover:text-white p-0 me-3 edit-post"
                             data-id="<?php echo $post['id']; ?>"
                             data-title="<?php echo htmlspecialchars($post['title']); ?>"
                             data-cat="<?php echo htmlspecialchars($post['category']); ?>"
@@ -491,8 +499,8 @@ try {
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown supported)</label>
-                            <textarea name="content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl" required></textarea>
+                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown & HTML supported)</label>
+                            <textarea name="content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl font-mono" required></textarea>
                         </div>
                         <div class="col-12 mt-4">
                             <h6 class="text-danger font-condensed italic fw-black border-bottom border-white border-opacity-10 pb-2 mb-3">SEO METADATA & TAGS</h6>
@@ -579,8 +587,8 @@ try {
                             </div>
                         </div>
                         <div class="col-12">
-                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown supported)</label>
-                            <textarea name="content" id="edit_content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl" required></textarea>
+                            <label class="form-label text-white-50 small uppercase font-black">Content (Markdown & HTML supported)</label>
+                            <textarea name="content" id="edit_content" rows="10" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl font-mono" required></textarea>
                         </div>
                         <div class="col-12 mt-4">
                             <h6 class="text-danger font-condensed italic fw-black border-bottom border-white border-opacity-10 pb-2 mb-3">SEO METADATA & TAGS</h6>
