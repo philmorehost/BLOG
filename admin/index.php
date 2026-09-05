@@ -59,6 +59,8 @@ if ($path == '/' || $path == '' || $path == '/posts') {
     include __DIR__ . '/categories.php';
 } elseif (strpos($path, '/pages') === 0) {
     include __DIR__ . '/pages.php';
+} elseif (strpos($path, '/import_wordpress') === 0) {
+    include __DIR__ . '/import_wordpress.php';
 } elseif (strpos($path, '/profile') === 0) {
     include __DIR__ . '/profile.php';
 } elseif (strpos($path, '/pin_verify') === 0) {

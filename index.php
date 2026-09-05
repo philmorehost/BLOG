@@ -85,6 +85,27 @@ if ($path == '/' || $path == '' || empty($path)) {
         header('Location: /?error=invalid_email');
         exit;
     }
+} elseif ($path == '/llms.txt') {
+    if (!file_exists(__DIR__ . '/llms.txt')) {
+        update_llms_txt();
+    }
+    header('Content-Type: text/plain; charset=utf-8');
+    readfile(__DIR__ . '/llms.txt');
+    exit;
+} elseif ($path == '/llms-full.txt') {
+    if (!file_exists(__DIR__ . '/llms-full.txt')) {
+        update_llms_txt();
+    }
+    header('Content-Type: text/plain; charset=utf-8');
+    readfile(__DIR__ . '/llms-full.txt');
+    exit;
+} elseif ($path == '/sitemap.xml') {
+    if (!file_exists(__DIR__ . '/sitemap.xml')) {
+        update_sitemap();
+    }
+    header('Content-Type: application/xml; charset=utf-8');
+    readfile(__DIR__ . '/sitemap.xml');
+    exit;
 } elseif ($path == '/admin/login' || $path == '/admin/login.php') {
     include __DIR__ . '/admin/login.php';
 } elseif (strpos($path, '/admin') === 0) {

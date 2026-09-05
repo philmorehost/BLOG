@@ -110,7 +110,14 @@ CREATE TABLE IF NOT EXISTS categories (
     slug VARCHAR(100)
 );
 
-INSERT INTO site_settings (name, tagline, selected_model) VALUES ('FOOTBALL INTELLIGENCE', 'Sports Intelligence Network', 'deepseek-chat');
+CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug);
+CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category);
+CREATE INDEX IF NOT EXISTS idx_posts_created_at ON posts(created_at);
+CREATE INDEX IF NOT EXISTS idx_posts_publish_date ON posts(publish_date);
+CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug);
+CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);
+
+INSERT INTO site_settings (name, tagline, selected_model) VALUES ('BLOGEASY', 'General News & Intelligence Network', 'deepseek-chat');
 INSERT INTO categories (name, slug) VALUES ('Football News', 'football-news'), ('Transfer News', 'transfer-news');
 INSERT INTO pages (title, slug, content, is_visible, position) VALUES ('Privacy Policy', 'privacy-policy', '# Privacy Policy\n\nYour privacy is important to us.', 1, 'main');
 INSERT INTO pages (title, slug, content, is_visible, position) VALUES ('About Us', 'about-us', '# About Football Intelligence Network\n\nWelcome to the most advanced football intelligence hub.\n\n## Our Mission\nOur mission is to provide real-time, professional-grade football intelligence and transfer updates to fans globally. We leverage expert insights to bring you the stories that matter.\n\n## The Team\nOur team consists of veteran sports journalists and data analysts dedicated to 100 percent human-verified reporting.', 1, 'footer');

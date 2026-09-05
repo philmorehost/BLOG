@@ -8,7 +8,7 @@ function get_settings() {
 
     $conn = get_db_connection();
     if (!$conn) return [
-        'name' => 'FOOTBALL INTELLIGENCE',
+        'name' => 'BLOGEASY',
         'logo' => '',
         'favicon' => ''
     ];
@@ -139,8 +139,17 @@ function get_settings() {
         }
     }
 
+    // Ensure database performance indexes exist
+    try {
+        $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_slug ON posts(slug)");
+        $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_category ON posts(category)");
+        $conn->exec("CREATE INDEX IF NOT EXISTS idx_posts_publish_date ON posts(publish_date)");
+        $conn->exec("CREATE INDEX IF NOT EXISTS idx_pages_slug ON pages(slug)");
+        $conn->exec("CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug)");
+    } catch (Exception $e) {}
+
     $settings = $settings ?: [
-        'name' => 'FOOTBALL INTELLIGENCE',
+        'name' => 'BLOGEASY',
         'logo' => '',
         'favicon' => ''
     ];
@@ -376,7 +385,7 @@ function send_mail($to, $subject, $message) {
 
 function render_email_template($content, $subtitle = 'Intelligence Protocol Active') {
     $settings = get_settings();
-    $site_name = $settings['name'] ?? 'FOOTBALL INTELLIGENCE';
+    $site_name = $settings['name'] ?? 'BLOGEASY';
     $year = date('Y');
 
     return "
@@ -541,17 +550,23 @@ function get_ai_insight($prompt) {
  */
 function get_rss_feed_urls() {
     return [
-        'https://www.skysports.com/rss/12040', // Sky Sports Football
-        'https://www.espn.com/espn/rss/soccer/news', // ESPN Soccer
-        'https://www.bbc.com/sport/football/rss.xml', // BBC Football
-        'https://www.theguardian.com/football/rss', // The Guardian Football
-        'https://sport.sky.ch/feed', // Sky Sport CH (Euro focus)
-        'https://www.france24.com/en/sports/rss', // France24 Sports
-        'https://talksport.com/football/feed/', // TalkSport Football
-        'https://www.caughtoffside.com/feed/', // CaughtOffside (Transfer Rumours)
-        'https://www.football-espana.net/feed', // Football Espana
-        'https://www.football-italia.net/feed', // Football Italia
-        'https://news.google.com/rss/search?q=football+transfers+premier+league+la+liga+serie+a+ligue+1+bundesliga&hl=en-GB&gl=GB&ceid=GB:en' // Google News Football Search
+        // Nigeria News Feeds
+        'https://vanguardngr.com/feed/', // Vanguard Nigeria
+        'https://punchng.com/feed/', // Punch Newspaper
+        'https://premiumtimesng.com/feed', // Premium Times
+        'https://dailytrust.com/feed/', // Daily Trust
+        'https://channelsng.com/feed/', // Channels TV Nigeria
+        'https://guardian.ng/feed/', // The Guardian Nigeria
+
+        // World & Global News Feeds
+        'http://rss.cnn.com/rss/edition.rss', // CNN Top News
+        'http://rss.cnn.com/rss/edition_world.rss', // CNN World News
+        'https://www.aljazeera.com/xml/rss/all.xml', // Al Jazeera English
+        'https://feeds.bbci.co.uk/news/rss.xml', // BBC News
+        'https://feeds.bbci.co.uk/news/world/rss.xml', // BBC World News
+        'https://www.france24.com/en/rss', // France24 World
+        'https://www.theguardian.com/world/rss', // The Guardian World
+        'https://news.google.com/rss/search?q=Nigeria+news+or+world+news&hl=en-NG&gl=NG&ceid=NG:en' // Google News Nigeria/World
     ];
 }
 
@@ -866,4 +881,83 @@ function update_sitemap() {
     $xml .= '</urlset>';
 
     file_put_contents(__DIR__ . '/../sitemap.xml', $xml);
+    update_llms_txt();
+}
+
+/**
+ * Generates llms.txt and llms-full.txt for AI Visibility.
+ */
+function update_llms_txt() {
+    $settings = get_settings();
+    $site_name = $settings['name'] ?? 'BLOGEASY';
+    $site_tagline = $settings['tagline'] ?? 'General News & Intelligence Network';
+
+    if (defined('SITE_URL') && !empty(SITE_URL)) {
+        $site_url = rtrim(SITE_URL, '/');
+    } else {
+        $scheme = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on') ? 'https' : 'http';
+        $host = $_SERVER['HTTP_HOST'] ?? 'localhost';
+        $site_url = $scheme . '://' . $host;
+    }
+
+    $conn = get_db_connection();
+    if (!$conn) return;
+
+    // Build llms.txt (Concise / Summary AI Visibility)
+    $txt = "# {$site_name}\n\n";
+    $txt .= "> {$site_tagline}\n\n";
+    $txt .= "Website: {$site_url}\n";
+    $txt .= "Sitemap: {$site_url}/sitemap.xml\n\n";
+    $txt .= "## Key Pages\n";
+    $txt .= "- [Home]({$site_url}/): Latest news and featured reports\n";
+
+    // Static pages
+    $pages = $conn->query("SELECT title, slug, meta_description FROM pages WHERE is_visible = 1 AND is_external = 0 ORDER BY id ASC")->fetchAll();
+    foreach ($pages as $p) {
+        $desc = !empty($p['meta_description']) ? ": " . $p['meta_description'] : "";
+        $txt .= "- [{$p['title']}]({$site_url}/{$p['slug']}){$desc}\n";
+    }
+
+    $txt .= "\n## Main Categories\n";
+    $categories = $conn->query("SELECT name, slug FROM categories ORDER BY name ASC")->fetchAll();
+    foreach ($categories as $cat) {
+        $txt .= "- [{$cat['name']}]({$site_url}/category/{$cat['slug']})\n";
+    }
+
+    $txt .= "\n## Recent News Articles\n";
+    $posts = $conn->query("SELECT title, slug, excerpt, publish_date FROM posts WHERE is_scheduled = 0 OR publish_date <= CURRENT_TIMESTAMP ORDER BY publish_date DESC LIMIT 30")->fetchAll();
+    foreach ($posts as $post) {
+        $excerpt = !empty($post['excerpt']) ? " - " . str_replace(["\r", "\n"], " ", strip_tags($post['excerpt'])) : "";
+        $txt .= "- [{$post['title']}]({$site_url}/post/{$post['slug']}){$excerpt}\n";
+    }
+
+    file_put_contents(__DIR__ . '/../llms.txt', $txt);
+
+    // Build llms-full.txt (Comprehensive / Full Content AI Visibility)
+    $full = "# {$site_name} - Full LLM Context Digest\n\n";
+    $full .= "> {$site_tagline}\n";
+    $full .= "Canonical Domain: {$site_url}\n";
+    $full .= "Generated Date: " . date('Y-m-d H:i:s T') . "\n\n";
+
+    $full .= "--- \n\n";
+    $full .= "## Site Categories\n";
+    foreach ($categories as $cat) {
+        $full .= "### {$cat['name']}\nURL: {$site_url}/category/{$cat['slug']}\n\n";
+    }
+
+    $full .= "--- \n\n";
+    $full .= "## Complete Articles Index\n\n";
+    $all_posts = $conn->query("SELECT id, title, slug, category, author, publish_date, excerpt, content FROM posts ORDER BY publish_date DESC LIMIT 200")->fetchAll();
+    foreach ($all_posts as $p) {
+        $full .= "### " . clean_utf8($p['title']) . "\n";
+        $full .= "- URL: {$site_url}/post/{$p['slug']}\n";
+        $full .= "- Category: {$p['category']}\n";
+        $full .= "- Author: {$p['author']}\n";
+        $full .= "- Date: {$p['publish_date']}\n\n";
+        $full .= "#### Summary\n" . clean_utf8($p['excerpt']) . "\n\n";
+        $full .= "#### Full Content\n" . clean_utf8(strip_tags($p['content'])) . "\n\n";
+        $full .= "---\n\n";
+    }
+
+    file_put_contents(__DIR__ . '/../llms-full.txt', $full);
 }

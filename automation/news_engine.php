@@ -1,5 +1,5 @@
 <?php
-// Football Intelligence News Automation Engine - AI ONLY (NO NewsAPI)
+// BLOGEASY News Automation Engine - High-Performance AI Rewriter & Feed Aggregator
 require_once __DIR__ . '/../includes/config.php';
 require_once __DIR__ . '/../includes/db.php';
 require_once __DIR__ . '/../includes/functions.php';
@@ -15,17 +15,22 @@ if (empty($apiKey)) {
 
 echo "Starting AI-Powered News Discovery...\n";
 
-// Fetch current categories from DB - Strictly restricted
+// Fetch current categories from DB - General News Focus
 $available_categories_data = [
-    ['name' => 'Football News', 'slug' => 'football-news'],
-    ['name' => 'Transfer News', 'slug' => 'transfer-news']
+    ['name' => 'Nigeria News', 'slug' => 'nigeria-news'],
+    ['name' => 'World News', 'slug' => 'world-news'],
+    ['name' => 'Politics', 'slug' => 'politics'],
+    ['name' => 'Business', 'slug' => 'business'],
+    ['name' => 'Sports', 'slug' => 'sports'],
+    ['name' => 'Entertainment', 'slug' => 'entertainment'],
+    ['name' => 'Tech', 'slug' => 'tech']
 ];
 $driver = $conn->getAttribute(PDO::ATTR_DRIVER_NAME);
 $sql = ($driver === 'sqlite') ? "INSERT OR IGNORE INTO categories (name, slug) VALUES (?, ?)" : "INSERT IGNORE INTO categories (name, slug) VALUES (?, ?)";
 foreach ($available_categories_data as $cat) {
     $conn->prepare($sql)->execute([$cat['name'], $cat['slug']]);
 }
-$cat_list = 'Football News, Transfer News';
+$cat_list = 'Nigeria News, World News, Politics, Business, Sports, Entertainment, Tech';
 
 // 1. Discovery Stage: Fetch factual news from RSS Feeds
 $today = date('D d M Y H:i');
@@ -42,30 +47,35 @@ if (!empty($rss_results)) {
     foreach ($rss_results as $res) {
         if (count($discovered_items) >= 60) break;
 
-        // Immediate rejection of non-European football / American sports content
         $lower_title = strtolower($res['title']);
         $lower_desc = strtolower($res['description']);
 
-        $banned = ['nfl', 'nba', 'mlb', 'nhl', 'mls', 'baseball', 'basketball', 'college football', 'nascar', 'wnba', 'cricket', 'rugby', 'golf', 'tennis', 'f1 ', 'formula 1', 'boxing', 'ufc', 'mma', 'horse racing', 'super bowl', 'playoffs', 'touchdown', 'homerun', 'yankees', 'lakers', 'ncaa', 'gridiron', 'quarterback', 'field goal', 'world series', 'stanley cup', 'nba finals', 'indiana jones', 'hollywood', 'broadway'];
-        $is_banned = false;
-        foreach ($banned as $b) {
-            if (strpos($lower_title, $b) !== false || strpos($lower_desc, $b) !== false) {
-                $is_banned = true;
-                break;
-            }
-        }
-        if ($is_banned) continue;
-
-        // Content Deduplication via Description Hash
-        $desc_hash = md5($res['description']);
+        // Content Deduplication via Description Hash & Title Hash
+        $desc_hash = md5(trim($res['title'] . $res['description']));
         if (in_array($desc_hash, $seen_descriptions)) continue;
         $seen_descriptions[] = $desc_hash;
+
+        // Categorize based on source / keywords
+        $category = 'World News';
+        if (strpos($res['source'], 'vanguard') !== false || strpos($res['source'], 'punch') !== false || strpos($res['source'], 'premiumtimes') !== false || strpos($res['source'], 'dailytrust') !== false || strpos($res['source'], 'channels') !== false || strpos($res['source'], 'guardian.ng') !== false || strpos($lower_title, 'nigeria') !== false || strpos($lower_desc, 'nigeria') !== false || strpos($lower_title, 'tinubu') !== false) {
+            $category = 'Nigeria News';
+        } elseif (strpos($lower_title, 'election') !== false || strpos($lower_title, 'politics') !== false || strpos($lower_title, 'senate') !== false || strpos($lower_title, 'governor') !== false || strpos($lower_title, 'president') !== false) {
+            $category = 'Politics';
+        } elseif (strpos($lower_title, 'business') !== false || strpos($lower_title, 'naira') !== false || strpos($lower_title, 'dollar') !== false || strpos($lower_title, 'economy') !== false || strpos($lower_title, 'bank') !== false || strpos($lower_title, 'market') !== false) {
+            $category = 'Business';
+        } elseif (strpos($lower_title, 'football') !== false || strpos($lower_title, 'match') !== false || strpos($lower_title, 'league') !== false || strpos($lower_title, 'cup') !== false || strpos($lower_title, 'super eagles') !== false) {
+            $category = 'Sports';
+        } elseif (strpos($lower_title, 'movie') !== false || strpos($lower_title, 'music') !== false || strpos($lower_title, 'afrobeats') !== false || strpos($lower_title, 'nollywood') !== false || strpos($lower_title, 'actor') !== false) {
+            $category = 'Entertainment';
+        } elseif (strpos($lower_title, 'tech') !== false || strpos($lower_title, 'ai ') !== false || strpos($lower_title, 'google') !== false || strpos($lower_title, 'apple') !== false || strpos($lower_title, 'crypto') !== false) {
+            $category = 'Tech';
+        }
 
         $discovered_items[] = [
             'title' => $res['title'],
             'description' => $res['description'],
             'source_link' => $res['link'],
-            'category' => 'Football News',
+            'category' => $category,
             'image_keyword' => $res['title']
         ];
     }
@@ -103,16 +113,15 @@ foreach ($discovered_items as $idx => $item) {
     $headlines_to_filter .= "$idx: {$item['title']}\n";
 }
 
-$filter_prompt = "Act as a Content Curator for a European Football Intelligence Network.
-I have a list of discovered headlines from RSS feeds.
+$filter_prompt = "Act as Chief Content Curator for BLOGEASY General News Network.
+I have a list of discovered news headlines from various RSS feeds (Nigeria News, World News, Politics, Business, Sports, Entertainment, Tech).
 You MUST filter this list and return a JSON array of indices (integers) that I should KEEP.
 
 STRICT FILTERING RULES:
-1. KEEP only news related to top-tier European Football (Premier League, La Liga, Serie A, Ligue 1, Bundesliga, Champions League, Europa League, Conference League) and associated transfers.
-2. STERNLY REMOVE all American sports content (NFL, NBA, MLB, NHL, MLS) and minor leagues.
-3. ABSOLUTELY REMOVE headlines that refer to the SAME event or story already present in our database (cross-check against recent headlines provided).
-4. If multiple headlines in the current list refer to the SAME story, KEEP only the ONE most descriptive one.
-5. If a headline is about generic sports, multi-sport events, or non-football topics, REMOVE it.
+1. ABSOLUTELY REMOVE duplicate stories or headlines that refer to the SAME event already covered in the recent database headlines.
+2. If multiple headlines in the current list refer to the SAME story or event (even from different RSS feeds), KEEP only the ONE most comprehensive headline and discard the rest.
+3. REMOVE low-quality clickbait or non-news promotional headlines.
+4. ENSURE a rich mix of Nigeria News, World News, Business, Tech, Politics, and Sports.
 
 RECENT DATABASE HEADLINES (ALREADY PUBLISHED):
 $db_headlines_str
@@ -168,37 +177,31 @@ foreach ($discovered_items as $item) {
     // Stage 2: Content Generation for this specific story
     echo "Stage 2: Factual Rewriting and SEO metadata generation...\n";
     $target_cat = $item['category'];
-    $content_prompt = "Act as a Senior European Football Columnist for '{$settings['name']}'. You are an expert analyst with a deep understanding of the tactical and emotional nuances of the beautiful game.
+    $content_prompt = "Act as a Senior Investigative Journalist and Lead Editor for '{$settings['name']}'. You are writing a 100% humanized, original news report based on raw factual summary input.
 
     SOURCE DATA:
     Headline: '{$item['title']}'
     Factual Summary: '{$item['description']}'
 
-    STYLE: Professional British Standard English. Authoritative, insightful, and highly engaging. Think of a blend between a high-end broadsheet sports page and an expert fan-led editorial.
+    STYLE & TONE: Standard Journalism. Objective, authoritative, highly engaging, and clear. Write like a veteran journalist from Reuters, Associated Press, or Punch Newspaper.
 
     STRICT LINGUISTIC GUIDELINES (0% AI DETECTION - 100% HUMAN):
-    1. REWRITE THE TITLE: Create a strong, punchy, and professional headline. Avoid clichés.
-    2. WHITE-LABEL: Replace ALL mentions of external sources (BBC, Sky, ESPN, etc.) with '{$settings['name']}'.
-    3. VOCABULARY: Use 'Football' (never soccer), 'Pitch' (not field), 'Kit' (not uniform). Use expert terminology: 'low block', 'transitional play', 'clinical finishing', 'tactical flexibility'.
-    4. PERSPECTIVE: Write as an insider. Use occasional rhetorical questions to engage the reader.
-    5. PUNCTUATION: Use flowing prose and proper sentence breaks. ABSOLUTELY NO em-dashes (—/–), NO HYPHENS (-), and NO AI-style bullet points.
-    6. STRUCTURE: Organize the content into 3-6 clearly defined paragraphs. Use DOUBLE NEWLINES (\n\n) between paragraphs.
-    7. SENTENCE VARIETY: Vary sentence lengths and structures significantly. Mix short, impactful sentences with longer, more detailed observations (burstiness).
-    7. HUMAN TOUCH: Use colloquialisms common in football culture (e.g., 'bottled it', 'in the mixer', 'squeaky bum time', 'parked the bus') sparingly but effectively to establish authenticity.
-    8. NO HALLUCINATIONS: Do not add external facts not present in the summary, but you MAY add expert analysis and fan-perspective commentary based ONLY on the provided summary.
+    1. REWRITE THE TITLE: Create a brand new, compelling, non-word-for-word headline that accurately captures the story without plagiarizing the original.
+    2. WHITE-LABEL & ORIGINAL REPORTING: Replace ALL mentions of external sources (BBC, Vanguard, Punch, CNN, Al Jazeera, Reuters, etc.) with '{$settings['name']}' or general phrases like 'official statements' / 'reports'.
+    3. NO WORD-FOR-WORD PLAGIARISM: Completely rephrase every single sentence. Do not copy exact sentences from the summary.
+    4. PUNCTUATION: Use clean prose. ABSOLUTELY NO em-dashes (—/–), NO hyphens (-), and NO AI-style bullet points or markdown lists.
+    5. STRUCTURE: Organize into 4-6 detailed, well-developed paragraphs. Use DOUBLE NEWLINES (\n\n) between paragraphs.
+    6. SENTENCE VARIETY: Mix short impactful statements with longer detailed explanations (burstiness and perplexity).
+    7. ACCURACY: Ensure key entities, names, locations, and factual events match 100% with the provided summary.
 
     BANNED PHRASES/AI TELLS (STRICTLY FORBIDDEN):
     - NO: 'pivotal moment', 'vital role', 'testament', 'underscores', 'evolving landscape', 'indelible mark', 'shaping the', 'setting the stage', 'tapestry', 'delve', 'unleash', 'comprehensive', 'ultimate guide'.
-    - NO '-ing' depth: 'highlighting...', 'symbolizing...', 'reflecting...', 'showcasing...'.
-    - NO Ad-speak: 'groundbreaking', 'transformative', 'cutting-edge', 'seamless', 'robust', 'world-class'.
-    - NO Vague attributions: 'experts say', 'it has been reported'.
-    - NO Copula avoidance: Do not use 'serves as', 'functions as', 'stands as'. Just use 'is' or 'are'.
     - NO Filler: 'At its core', 'In today\'s world', 'It\'s worth noting', 'Needless to say', 'That being said'.
     - NO Signposting: 'Let\'s dive in', 'Without further ado'.
     - NO generic closings: 'The future looks bright', 'Exciting times lie ahead'.
 
     CATEGORY SELECTION:
-    - Categorize strictly into one of: ($cat_list).
+    - Categorize strictly into one of: ($cat_list). Default to '{$target_cat}'.
 
     Return ONLY a valid JSON object with:
     - 'title': The professional, rewritten headline.
@@ -222,17 +225,22 @@ foreach ($discovered_items as $item) {
         continue;
     }
 
-    // 3. Fetch Image - Multi-Source Unique Discovery
-    $specific_keyword = urlencode($item['image_keyword'] . " " . rand(100, 999));
-    $category_keyword = urlencode($item['category'] . " " . $item['title']);
+    // 3. Fetch Image - High Accuracy Keyword Matching
+    // Extract key nouns/entities from headline for 100% accurate image query
+    $clean_title = preg_replace('/[^A-Za-z0-9\s]/', '', $generated_title);
+    $title_words = array_filter(explode(' ', $clean_title), function($w) {
+        return strlen($w) > 3 && !in_array(strtolower($w), ['this', 'that', 'with', 'from', 'have', 'more', 'about', 'after', 'over', 'into', 'under', 'will']);
+    });
+    $top_keywords = implode(' ', array_slice($title_words, 0, 4));
+
+    $specific_keyword = urlencode($top_keywords . " " . $item['category'] . " news");
 
     $image_sources = [];
     if (!empty($item['image_url'])) $image_sources[] = $item['image_url'];
 
     $image_sources[] = "https://tse1.mm.bing.net/th?q=" . $specific_keyword . "&w=1200&h=800&c=7&rs=1&p=0&dpr=1&pid=Api";
-    $image_sources[] = "https://tse1.mm.bing.net/th?q=" . urlencode($item['title'] . " sports photography") . "&w=1200&h=800&c=7&rs=1&p=0&dpr=1&pid=Api";
-    $image_sources[] = "https://loremflickr.com/1200/800/" . urlencode(str_replace(' ', ',', $item['image_keyword'])) . "/all?lock=" . rand(1, 99999);
-    $image_sources[] = "https://tse1.mm.bing.net/th?q=" . $category_keyword . "&w=1200&h=800&c=7&rs=1&p=0&dpr=1&pid=Api";
+    $image_sources[] = "https://tse1.mm.bing.net/th?q=" . urlencode(implode(' ', array_slice($title_words, 0, 3)) . " photography") . "&w=1200&h=800&c=7&rs=1&p=0&dpr=1&pid=Api";
+    $image_sources[] = "https://loremflickr.com/1200/800/" . urlencode(implode(',', array_slice($title_words, 0, 2))) . "/all?lock=" . rand(1, 99999);
 
     $img_data = null;
     foreach ($image_sources as $source_url) {

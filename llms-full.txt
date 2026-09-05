@@ -1,0 +1,18 @@
+# BLOGEASY - Full LLM Context Digest
+
+> General News & Intelligence Network
+Canonical Domain: http://localhost:8000
+Generated Date: 2026-09-05 09:58:27 UTC
+
+---
+
+## Site Categories
+### Football News
+URL: http://localhost:8000/category/football-news
+
+### Transfer News
+URL: http://localhost:8000/category/transfer-news
+
+---
+
+## Complete Articles Index
