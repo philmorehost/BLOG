@@ -14,8 +14,10 @@ if (file_exists(__DIR__ . '/../includes/config.php')) {
         $table_exists = false;
         if ($conn) {
             try {
-                $conn->query("SELECT 1 FROM site_settings LIMIT 1");
-                $table_exists = true;
+                $count = $conn->query("SELECT COUNT(*) FROM site_settings")->fetchColumn();
+                if ($count > 0) {
+                    $table_exists = true;
+                }
             } catch (Exception $e) {
                 $table_exists = false;
             }

@@ -15,6 +15,12 @@ function get_settings() {
     try {
         $stmt = $conn->query("SELECT * FROM site_settings WHERE id = 1");
         $settings = $stmt->fetch();
+        if (!$settings) {
+            if (php_sapi_name() !== 'cli' && !headers_sent()) {
+                header("Location: /install/");
+                exit;
+            }
+        }
     } catch (PDOException $e) {
         // Table site_settings does not exist or database is uninitialized.
         if (php_sapi_name() !== 'cli' && !headers_sent()) {

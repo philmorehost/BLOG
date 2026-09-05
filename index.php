@@ -27,7 +27,11 @@ if ($path !== '/install' && strpos($path, '/install/') !== 0) {
     }
 
     try {
-        $conn->query("SELECT 1 FROM site_settings LIMIT 1");
+        $count = $conn->query("SELECT COUNT(*) FROM site_settings")->fetchColumn();
+        if ($count == 0) {
+            header("Location: /install/");
+            exit;
+        }
     } catch (Exception $e) {
         header("Location: /install/");
         exit;
