@@ -66,11 +66,16 @@ function get_settings() {
     } catch (Exception $e) {
         try {
             $conn->exec("ALTER TABLE categories ADD COLUMN slug VARCHAR(100)");
+        } catch (Exception $ex) {}
+
+        try {
             // Populate slugs for existing categories
             $all_cats = $conn->query("SELECT id, name FROM categories")->fetchAll();
-            foreach ($all_cats as $c) {
-                $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $c['name'])));
-                $conn->prepare("UPDATE categories SET slug = ? WHERE id = ?")->execute([$slug, $c['id']]);
+            if ($all_cats) {
+                foreach ($all_cats as $c) {
+                    $slug = strtolower(trim(preg_replace('/[^A-Za-z0-9-]+/', '-', $c['name'])));
+                    $conn->prepare("UPDATE categories SET slug = ? WHERE id = ?")->execute([$slug, $c['id']]);
+                }
             }
         } catch (Exception $ex) {}
     }
@@ -152,12 +157,27 @@ function get_categories_with_counts() {
         ['name' => 'TRANSFER NEWS', 'post_count' => 3],
         ['name' => 'MATCH ANALYSIS', 'post_count' => 8]
     ];
-    $stmt = $conn->query("SELECT c.id, c.name, c.slug, COUNT(p.id) as post_count
-                          FROM categories c
-                          LEFT JOIN posts p ON c.name = p.category
-                          GROUP BY c.id, c.name, c.slug
-                          ORDER BY c.name ASC");
-    $categories = $stmt->fetchAll();
+
+    try {
+        $stmt = $conn->query("SELECT c.id, c.name, c.slug, COUNT(p.id) as post_count
+                              FROM categories c
+                              LEFT JOIN posts p ON c.name = p.category
+                              GROUP BY c.id, c.name, c.slug
+                              ORDER BY c.name ASC");
+        $categories = $stmt->fetchAll();
+    } catch (Exception $e) {
+        try {
+            $conn->exec("ALTER TABLE categories ADD COLUMN slug VARCHAR(100)");
+            $stmt = $conn->query("SELECT c.id, c.name, c.slug, COUNT(p.id) as post_count
+                                  FROM categories c
+                                  LEFT JOIN posts p ON c.name = p.category
+                                  GROUP BY c.id, c.name, c.slug
+                                  ORDER BY c.name ASC");
+            $categories = $stmt->fetchAll();
+        } catch (Exception $ex) {
+            $categories = [];
+        }
+    }
     return $categories;
 }
 
