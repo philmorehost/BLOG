@@ -51,11 +51,23 @@ if ($path == '/' || $path == '' || empty($path)) {
     $_GET['name'] = urldecode($matches[1]);
     include __DIR__ . '/pages/author.php';
 } elseif ($path == '/watch') {
-    include __DIR__ . '/pages/watch.php';
+    $settings = get_settings();
+    if (!($settings['enable_live_feed'] ?? 1)) {
+        if (!headers_sent()) http_response_code(404);
+        include __DIR__ . '/pages/404.php';
+    } else {
+        include __DIR__ . '/pages/watch.php';
+    }
 } elseif ($path == '/betting') {
     include __DIR__ . '/pages/betting.php';
 } elseif ($path == '/tables' || $path == '/standings') {
-    include __DIR__ . '/pages/tables.php';
+    $settings = get_settings();
+    if (!($settings['enable_standings'] ?? 1)) {
+        if (!headers_sent()) http_response_code(404);
+        include __DIR__ . '/pages/404.php';
+    } else {
+        include __DIR__ . '/pages/tables.php';
+    }
 } elseif (preg_match('/^\/category\/([^\/]+)$/', $path, $matches)) {
     $cat_identifier = $matches[1];
     // Check if it's a slug or name

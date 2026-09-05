@@ -200,7 +200,9 @@ function auto_update_database() {
                 'section_priority_title VARCHAR(255) DEFAULT \'Priority Intelligence\'',
                 'section_latest_title VARCHAR(255) DEFAULT \'Latest Intelligence\'',
                 'section_football_title VARCHAR(255) DEFAULT \'Football News\'',
-                'section_transfer_title VARCHAR(255) DEFAULT \'Transfer Intelligence\''
+                'section_transfer_title VARCHAR(255) DEFAULT \'Transfer Intelligence\'',
+                'enable_live_feed BOOLEAN DEFAULT TRUE',
+                'enable_standings BOOLEAN DEFAULT TRUE'
             ],
             'posts' => ['source_url VARCHAR(255)', 'video_url VARCHAR(255)'],
             'categories' => ['slug VARCHAR(100)'],

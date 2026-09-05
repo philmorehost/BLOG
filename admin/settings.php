@@ -17,11 +17,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['save_general'])) {
     $section_latest_title = sanitize($_POST['section_latest_title'] ?? 'Latest Intelligence');
     $section_football_title = sanitize($_POST['section_football_title'] ?? 'Football News');
     $section_transfer_title = sanitize($_POST['section_transfer_title'] ?? 'Transfer Intelligence');
+    $enable_live_feed = isset($_POST['enable_live_feed']) ? 1 : 0;
+    $enable_standings = isset($_POST['enable_standings']) ? 1 : 0;
 
     $header_code = $_POST['header_code'];
     $footer_code = $_POST['footer_code'];
-    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ? WHERE id = 1");
-    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title]);
+    $stmt = $conn->prepare("UPDATE site_settings SET name = ?, tagline = ?, admin_email = ?, whatsapp_number = ?, header_code = ?, footer_code = ?, theme = ?, section_priority_title = ?, section_latest_title = ?, section_football_title = ?, section_transfer_title = ?, enable_live_feed = ?, enable_standings = ? WHERE id = 1");
+    $stmt->execute([$name, $tagline, $admin_email, $whatsapp, $header_code, $footer_code, $theme, $section_priority_title, $section_latest_title, $section_football_title, $section_transfer_title, $enable_live_feed, $enable_standings]);
 
     // Handle Logo Upload
     $logo_path = upload_image($_FILES['logo']);
@@ -163,6 +165,29 @@ $activeTab = $_GET['tab'] ?? 'general';
                     <div class="col-md-6">
                         <label class="block text-[10px] font-black uppercase text-gray-500 mb-2">WhatsApp Number</label>
                         <input type="text" name="whatsapp_number" class="w-full bg-white/5 border border-white/10 rounded-2xl px-6 py-4 text-white font-bold" value="<?php echo $settings['whatsapp_number']; ?>">
+                    </div>
+
+                    <!-- Module Toggles -->
+                    <div class="col-12 mt-6">
+                        <div class="bg-white/5 p-6 rounded-2xl border border-white/10">
+                            <h4 class="text-white font-black uppercase italic mb-4 small text-danger"><i class="bi bi-toggle-on me-2"></i> Module Visibility</h4>
+                            <div class="row g-4">
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch pt-2">
+                                        <input class="form-check-input" type="checkbox" name="enable_live_feed" id="enable_live_feed" <?php echo ($settings['enable_live_feed'] ?? 1) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label text-white font-bold text-sm ms-2" for="enable_live_feed">Enable Live Feed Module</label>
+                                        <p class="text-[10px] text-white-50 mt-1 italic">Show "Live Feed" in navbar, footer, and routing.</p>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-check form-switch pt-2">
+                                        <input class="form-check-input" type="checkbox" name="enable_standings" id="enable_standings" <?php echo ($settings['enable_standings'] ?? 1) ? 'checked' : ''; ?>>
+                                        <label class="form-check-label text-white font-bold text-sm ms-2" for="enable_standings">Enable Standings / League Tables Module</label>
+                                        <p class="text-[10px] text-white-50 mt-1 italic">Show "Standings" in navbar, footer, and routing.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
                     </div>
 
                     <!-- Landing Page Section Titles -->

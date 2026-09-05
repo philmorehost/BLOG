@@ -42,8 +42,12 @@
                             <h4 class="font-condensed fw-black text-electric-red mb-3 small tracking-widest">CHANNELS</h4>
                             <ul class="list-unstyled small font-bold text-white-50 uppercase">
                                 <li class="mb-2"><a href="/" class="text-decoration-none text-reset hover:text-white transition-all">Latest Reports</a></li>
+                                <?php if ($settings['enable_live_feed'] ?? 1): ?>
                                 <li class="mb-2"><a href="/watch" class="text-decoration-none text-reset hover:text-white transition-all">Live Feed</a></li>
+                                <?php endif; ?>
+                                <?php if ($settings['enable_standings'] ?? 1): ?>
                                 <li class="mb-2"><a href="/tables" class="text-decoration-none text-reset hover:text-white transition-all">Standings</a></li>
+                                <?php endif; ?>
                             </ul>
                         </div>
                         <div class="col-md-4">

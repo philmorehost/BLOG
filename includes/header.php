@@ -111,8 +111,12 @@ $settings = get_settings();
                         }
                     }
                     ?>
+                    <?php if ($settings['enable_live_feed'] ?? 1): ?>
                     <li class="nav-item"><a class="nav-link px-2 <?php echo ($current_path == '/watch') ? 'active text-electric-red' : ''; ?>" href="/watch" style="color: #fff;">Live Feed</a></li>
+                    <?php endif; ?>
+                    <?php if ($settings['enable_standings'] ?? 1): ?>
                     <li class="nav-item"><a class="nav-link px-2 <?php echo ($current_path == '/tables' || $current_path == '/standings') ? 'active text-electric-red' : ''; ?>" href="/tables" style="color: #fff;">Standings</a></li>
+                    <?php endif; ?>
                 </ul>
 
                 <ul class="navbar-nav font-condensed fw-bold uppercase small align-items-lg-center no-scrollbar flex-nowrap overflow-x-auto">
