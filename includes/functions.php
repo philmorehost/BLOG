@@ -320,11 +320,28 @@ function get_admin_author_name() {
 }
 
 function version_image_url($url) {
-    if (!is_string($url) || $url === '' || !preg_match('#^/(?:assets|uploads)/#', $url)) return $url;
+    if (!is_string($url) || $url === '') return $url;
+    // Older form handlers stored HTML-escaped URLs in the database. Decode
+    // before escaping at the HTML output boundary, otherwise & becomes &amp;amp;.
+    $url = html_entity_decode(trim($url), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    if (preg_match('#^(?:assets|uploads)/#', $url)) $url = '/' . $url;
+    if (!preg_match('#^/(?:assets|uploads)/#', $url)) return $url;
     $path = parse_url($url, PHP_URL_PATH);
-    $file = __DIR__ . '/..' . $path;
-    $version = is_file($file) ? (string)filemtime($file) : (string)($_SERVER['REQUEST_TIME'] ?? time());
-    return $url . (strpos($url, '?') === false ? '?' : '&') . 'v=' . rawurlencode($version);
+    $file = __DIR__ . '/..' . rawurldecode($path);
+    // Do not change a missing image's URL on every request: that defeats caches.
+    if (!is_file($file)) return $url;
+    $fragment = '';
+    if (($position = strpos($url, '#')) !== false) {
+        $fragment = substr($url, $position);
+        $url = substr($url, 0, $position);
+    }
+    $version = rawurlencode((string)filemtime($file));
+    if (preg_match('/([?&])v=[^&]*/', $url)) {
+        $url = preg_replace('/([?&])v=[^&]*/', '${1}v=' . $version, $url);
+    } else {
+        $url .= (strpos($url, '?') === false ? '?' : '&') . 'v=' . $version;
+    }
+    return $url . $fragment;
 }
 
 function make_slug($value) {
@@ -917,6 +934,16 @@ function upload_image($file, $target_subpath = 'uploads/') {
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 
     if (!in_array($ext, $allowed)) return false;
+
+    // An allowed filename does not guarantee that its contents are an image.
+    // Reject corrupt files and mismatched formats before publishing a URL.
+    $image_info = @getimagesize($file['tmp_name']);
+    $types = [
+        'jpg' => IMAGETYPE_JPEG, 'jpeg' => IMAGETYPE_JPEG,
+        'png' => IMAGETYPE_PNG, 'gif' => IMAGETYPE_GIF,
+        'webp' => IMAGETYPE_WEBP, 'ico' => IMAGETYPE_ICO
+    ];
+    if ($image_info === false || $image_info[2] !== $types[$ext]) return false;
 
     $target_dir = __DIR__ . "/../assets/" . $target_subpath;
     if (!is_dir($target_dir) && !mkdir($target_dir, 0755, true) && !is_dir($target_dir)) {

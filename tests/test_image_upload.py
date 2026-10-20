@@ -65,6 +65,14 @@ echo $result;
                 self.assertEqual(response.status, 200)
                 self.assertEqual(response.getheader('Content-Type'), 'image/png')
                 self.assertEqual(response.read(), PNG)
+                # A renamed text file must not be saved as a featured image.
+                invalid = body.replace(PNG, b'not an image')
+                connection.request('POST', '/upload.php', invalid,
+                                   {'Content-Type': f'multipart/form-data; boundary={boundary}'})
+                response = connection.getresponse()
+                self.assertEqual(response.status, 400)
+                response.read()
+                self.assertEqual(len(list((root / 'assets/uploads').iterdir())), 1)
                 connection.close()
             finally:
                 process.terminate()

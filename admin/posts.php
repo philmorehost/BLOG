@@ -3,7 +3,10 @@ admin_header("Post");
 $default_author = get_admin_author_name();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (!verify_csrf_token($_POST['csrf_token'])) {
+    if (empty($_POST) && empty($_FILES) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+        // PHP discards the entire form when post_max_size is exceeded.
+        $error = 'The submitted form exceeds the server upload limit. Please use a smaller featured image or ask your host to increase post_max_size and upload_max_filesize. The post has not been saved.';
+    } elseif (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         die("CSRF Token Validation Failed");
     }
 }
@@ -31,8 +34,22 @@ if (isset($_POST['bulk_delete']) && !empty($_POST['selected_posts'])) {
     }
 }
 
+// Never silently publish a post after its selected image failed to upload.
+$uploaded_post_image = false;
+$post_image_failed = false;
+if (isset($_POST['save_manual']) || isset($_POST['update_manual'])) {
+    $file = $_FILES['image_file'] ?? [];
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        $uploaded_post_image = upload_image($file);
+        if (!$uploaded_post_image) {
+            $post_image_failed = true;
+            $error = 'Featured image upload failed. Use a valid JPG, PNG, GIF, WebP or ICO image within the server upload limit. Check that assets/uploads is writable. The post has not been saved.';
+        }
+    }
+}
+
 // Handle Manual Post Submission
-if (isset($_POST['save_manual'])) {
+if (isset($_POST['save_manual']) && !$post_image_failed) {
     $title = sanitize($_POST['title']);
     $slug = make_slug($_POST['slug'] ?? '') ?: make_slug($title);
     $cat = sanitize($_POST['cat']);
@@ -41,7 +58,7 @@ if (isset($_POST['save_manual'])) {
     // Auto-generate excerpt: first 150 chars
     $excerpt = sanitize(substr(strip_tags($content), 0, 150)) . '...';
 
-    $image = sanitize($_POST['image']);
+    $image = trim((string)($_POST['image'] ?? ''));
     $author = sanitize($_POST['author'] ?? $default_author);
 
     $tags = sanitize($_POST['tags'] ?? '');
@@ -55,7 +72,7 @@ if (isset($_POST['save_manual'])) {
     $publish_date = !empty($_POST['publish_date']) ? $_POST['publish_date'] : date('Y-m-d H:i:s');
 
     // Handle Image Upload
-    $uploaded_image = upload_image($_FILES['image_file']);
+    $uploaded_image = $uploaded_post_image;
     if ($uploaded_image) {
         $image = $uploaded_image;
     }
@@ -78,7 +95,7 @@ if (isset($_POST['save_manual'])) {
 }
 
 // Handle Manual Update
-if (isset($_POST['update_manual'])) {
+if (isset($_POST['update_manual']) && !$post_image_failed) {
     $id = (int)$_POST['post_id'];
     $title = sanitize($_POST['title']);
     $slug = make_slug($_POST['slug'] ?? '') ?: make_slug($title);
@@ -86,7 +103,7 @@ if (isset($_POST['update_manual'])) {
     $content = $_POST['content'];
     $excerpt = sanitize(substr(strip_tags($content), 0, 150)) . '...';
     $author = sanitize($_POST['author'] ?? 'STAFF');
-    $image = sanitize($_POST['image']);
+    $image = trim((string)($_POST['image'] ?? ''));
 
     $tags = sanitize($_POST['tags'] ?? '');
     $meta_title = sanitize($_POST['meta_title'] ?? '');
@@ -98,7 +115,7 @@ if (isset($_POST['update_manual'])) {
     $is_scheduled = !empty($_POST['publish_date']) ? 1 : 0;
     $publish_date = !empty($_POST['publish_date']) ? $_POST['publish_date'] : date('Y-m-d H:i:s');
 
-    $uploaded_image = upload_image($_FILES['image_file']);
+    $uploaded_image = $uploaded_post_image;
     if ($uploaded_image) {
         $image = $uploaded_image;
     }
@@ -358,7 +375,7 @@ try {
                     </td>
                     <td class="px-5 py-4 border-white border-opacity-5">
                         <div class="d-flex align-items-center">
-                            <img src="<?php echo $post['image']; ?>" class="rounded-2 me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                            <img src="<?php echo htmlspecialchars(version_image_url($post['image'])); ?>" class="rounded-2 me-3" style="width: 40px; height: 40px; object-fit: cover;">
                             <div>
                                 <div class="text-white font-bold small uppercase italic"><?php echo htmlspecialchars($post['title']); ?></div>
                                 <div class="text-[9px] text-white-50 font-monospace opacity-50">/<?php echo htmlspecialchars($post['slug']); ?></div>
@@ -491,7 +508,7 @@ try {
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-white-50 small uppercase font-black">OR Upload Image</label>
-                            <input type="file" name="image_file" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl">
+                            <input type="file" name="image_file" accept="image/jpeg,image/png,image/gif,image/webp,image/x-icon" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-white-50 small uppercase font-black">Schedule Deployment (Optional)</label>
@@ -580,7 +597,7 @@ try {
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-white-50 small uppercase font-black">Update Image File</label>
-                            <input type="file" name="image_file" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl">
+                            <input type="file" name="image_file" accept="image/jpeg,image/png,image/gif,image/webp,image/x-icon" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-white-50 small uppercase font-black">Schedule Deployment</label>
