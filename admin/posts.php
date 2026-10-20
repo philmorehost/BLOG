@@ -3,7 +3,10 @@ admin_header("Post");
 $default_author = get_admin_author_name();
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
-    if (!verify_csrf_token($_POST['csrf_token'])) {
+    if (empty($_POST) && empty($_FILES) && (int)($_SERVER['CONTENT_LENGTH'] ?? 0) > 0) {
+        // PHP discards the entire form when post_max_size is exceeded.
+        $error = 'The submitted form exceeds the server upload limit. Please use a smaller featured image or ask your host to increase post_max_size and upload_max_filesize. The post has not been saved.';
+    } elseif (!verify_csrf_token($_POST['csrf_token'] ?? '')) {
         die("CSRF Token Validation Failed");
     }
 }
@@ -31,8 +34,23 @@ if (isset($_POST['bulk_delete']) && !empty($_POST['selected_posts'])) {
     }
 }
 
+// Never silently publish a post after its selected image failed to upload.
+$uploaded_post_image = false;
+$post_image_failed = false;
+if (isset($_POST['save_manual']) || isset($_POST['update_manual'])) {
+    $file = $_FILES['image_file'] ?? [];
+    if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_NO_FILE) {
+        $image_upload_error = null;
+        $uploaded_post_image = upload_image($file, 'uploads/', $image_upload_error);
+        if (!$uploaded_post_image) {
+            $post_image_failed = true;
+            $error = 'Featured image upload failed: ' . htmlspecialchars($image_upload_error ?? 'Unknown upload error.', ENT_QUOTES, 'UTF-8') . ' The post has not been saved.';
+        }
+    }
+}
+
 // Handle Manual Post Submission
-if (isset($_POST['save_manual'])) {
+if (isset($_POST['save_manual']) && !$post_image_failed) {
     $title = sanitize($_POST['title']);
     $slug = make_slug($_POST['slug'] ?? '') ?: make_slug($title);
     $cat = sanitize($_POST['cat']);
@@ -41,7 +59,7 @@ if (isset($_POST['save_manual'])) {
     // Auto-generate excerpt: first 150 chars
     $excerpt = sanitize(substr(strip_tags($content), 0, 150)) . '...';
 
-    $image = sanitize($_POST['image']);
+    $image = trim((string)($_POST['image'] ?? ''));
     $author = sanitize($_POST['author'] ?? $default_author);
 
     $tags = sanitize($_POST['tags'] ?? '');
@@ -55,7 +73,7 @@ if (isset($_POST['save_manual'])) {
     $publish_date = !empty($_POST['publish_date']) ? $_POST['publish_date'] : date('Y-m-d H:i:s');
 
     // Handle Image Upload
-    $uploaded_image = upload_image($_FILES['image_file']);
+    $uploaded_image = $uploaded_post_image;
     if ($uploaded_image) {
         $image = $uploaded_image;
     }
@@ -78,7 +96,7 @@ if (isset($_POST['save_manual'])) {
 }
 
 // Handle Manual Update
-if (isset($_POST['update_manual'])) {
+if (isset($_POST['update_manual']) && !$post_image_failed) {
     $id = (int)$_POST['post_id'];
     $title = sanitize($_POST['title']);
     $slug = make_slug($_POST['slug'] ?? '') ?: make_slug($title);
@@ -86,7 +104,7 @@ if (isset($_POST['update_manual'])) {
     $content = $_POST['content'];
     $excerpt = sanitize(substr(strip_tags($content), 0, 150)) . '...';
     $author = sanitize($_POST['author'] ?? 'STAFF');
-    $image = sanitize($_POST['image']);
+    $image = trim((string)($_POST['image'] ?? ''));
 
     $tags = sanitize($_POST['tags'] ?? '');
     $meta_title = sanitize($_POST['meta_title'] ?? '');
@@ -98,7 +116,7 @@ if (isset($_POST['update_manual'])) {
     $is_scheduled = !empty($_POST['publish_date']) ? 1 : 0;
     $publish_date = !empty($_POST['publish_date']) ? $_POST['publish_date'] : date('Y-m-d H:i:s');
 
-    $uploaded_image = upload_image($_FILES['image_file']);
+    $uploaded_image = $uploaded_post_image;
     if ($uploaded_image) {
         $image = $uploaded_image;
     }
@@ -324,11 +342,11 @@ try {
 </div>
 
 <?php if (isset($success)): ?>
-    <div class="alert alert-success bg-green-900 bg-opacity-10 border-green-500 border-opacity-20 text-green-500 font-condensed italic uppercase mb-5"><?php echo $success; ?></div>
+    <div data-post-result="success" class="alert alert-success bg-green-900 bg-opacity-10 border-green-500 border-opacity-20 text-green-500 font-condensed italic uppercase mb-5"><?php echo $success; ?></div>
 <?php endif; ?>
 
 <?php if (isset($error)): ?>
-    <div class="alert alert-danger bg-red-900 bg-opacity-10 border-red-500 border-opacity-20 text-red-500 font-condensed italic uppercase mb-5"><?php echo $error; ?></div>
+    <div data-post-result="error" class="alert alert-danger bg-red-900 bg-opacity-10 border-red-500 border-opacity-20 text-red-500 font-condensed italic uppercase mb-5"><?php echo $error; ?></div>
 <?php endif; ?>
 
 <div class="bg-[#0a0e17] rounded-3xl border border-white/5 overflow-hidden shadow-2xl">
@@ -358,7 +376,7 @@ try {
                     </td>
                     <td class="px-5 py-4 border-white border-opacity-5">
                         <div class="d-flex align-items-center">
-                            <img src="<?php echo $post['image']; ?>" class="rounded-2 me-3" style="width: 40px; height: 40px; object-fit: cover;">
+                            <img src="<?php echo htmlspecialchars(version_image_url($post['image'])); ?>" class="rounded-2 me-3" style="width: 40px; height: 40px; object-fit: cover;">
                             <div>
                                 <div class="text-white font-bold small uppercase italic"><?php echo htmlspecialchars($post['title']); ?></div>
                                 <div class="text-[9px] text-white-50 font-monospace opacity-50">/<?php echo htmlspecialchars($post['slug']); ?></div>
@@ -461,9 +479,10 @@ try {
                 <h5 class="modal-title font-condensed fw-black italic text-white uppercase">Create New Post</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" enctype="multipart/form-data">
+            <form method="POST" enctype="multipart/form-data" data-post-editor>
                 <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <div class="modal-body p-4">
+                    <div class="alert alert-danger d-none" data-editor-error role="alert" tabindex="-1"></div>
                     <div class="row g-4">
                         <div class="col-md-8">
                             <label class="form-label text-white-50 small uppercase font-black">Title</label>
@@ -491,7 +510,7 @@ try {
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-white-50 small uppercase font-black">OR Upload Image</label>
-                            <input type="file" name="image_file" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl">
+                            <input type="file" name="image_file" accept="image/jpeg,image/png,image/gif,image/webp,image/x-icon" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-white-50 small uppercase font-black">Schedule Deployment (Optional)</label>
@@ -549,10 +568,11 @@ try {
                 <h5 class="modal-title font-condensed fw-black italic text-white uppercase">Edit Post Registry</h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <form method="POST" enctype="multipart/form-data">
+            <form method="POST" enctype="multipart/form-data" data-post-editor>
                 <input type="hidden" name="csrf_token" value="<?php echo generate_csrf_token(); ?>">
                 <input type="hidden" name="post_id" id="edit_id">
                 <div class="modal-body p-4">
+                    <div class="alert alert-danger d-none" data-editor-error role="alert" tabindex="-1"></div>
                     <div class="row g-4">
                         <div class="col-md-8">
                             <label class="form-label text-white-50 small uppercase font-black">Title</label>
@@ -580,7 +600,7 @@ try {
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-white-50 small uppercase font-black">Update Image File</label>
-                            <input type="file" name="image_file" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl">
+                            <input type="file" name="image_file" accept="image/jpeg,image/png,image/gif,image/webp,image/x-icon" class="form-control bg-black border-white border-opacity-10 text-white rounded-xl">
                         </div>
                         <div class="col-md-6">
                             <label class="form-label text-white-50 small uppercase font-black">Schedule Deployment</label>
@@ -633,6 +653,24 @@ try {
         </div>
     </div>
 </div>
+
+<?php
+// Progressive fallback: restore textual fields after a regular failed POST.
+// Files cannot be repopulated after navigation; enhanced submissions avoid it.
+$failed_editor = null;
+if (isset($error) && (isset($_POST['save_manual']) || isset($_POST['update_manual']))) {
+    $draft_fields = ['post_id', 'title', 'slug', 'cat', 'author', 'image', 'publish_date',
+        'source_url', 'video_url', 'content', 'tags', 'meta_title', 'meta_description', 'meta_keywords'];
+    $draft = [];
+    foreach ($draft_fields as $field) {
+        if (isset($_POST[$field]) && is_string($_POST[$field])) $draft[$field] = $_POST[$field];
+    }
+    $draft['is_top_story'] = isset($_POST['is_top_story']);
+    $failed_editor = ['modal' => isset($_POST['update_manual']) ? 'editModal' : 'manualModal', 'fields' => $draft];
+}
+?>
+<script type="application/json" id="failed-post-editor"><?php echo json_encode($failed_editor, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_INVALID_UTF8_SUBSTITUTE); ?></script>
+<script src="<?php echo htmlspecialchars(version_image_url('/assets/js/post-editor.js')); ?>" defer></script>
 
 <script>
 const selectAll = document.getElementById('selectAll');

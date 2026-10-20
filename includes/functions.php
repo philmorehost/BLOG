@@ -320,11 +320,33 @@ function get_admin_author_name() {
 }
 
 function version_image_url($url) {
-    if (!is_string($url) || $url === '' || !preg_match('#^/(?:assets|uploads)/#', $url)) return $url;
+    if (!is_string($url) || $url === '') return $url;
+    // Older form handlers stored HTML-escaped URLs in the database. Decode
+    // before escaping at the HTML output boundary, otherwise & becomes &amp;amp;.
+    $url = html_entity_decode(trim($url), ENT_QUOTES | ENT_HTML5, 'UTF-8');
+    if (preg_match('#^(?:assets|uploads)/#', $url)) $url = '/' . $url;
+    if (!preg_match('#^/(?:assets|uploads)/#', $url)) return $url;
     $path = parse_url($url, PHP_URL_PATH);
-    $file = __DIR__ . '/..' . $path;
-    $version = is_file($file) ? (string)filemtime($file) : (string)($_SERVER['REQUEST_TIME'] ?? time());
-    return $url . (strpos($url, '?') === false ? '?' : '&') . 'v=' . rawurlencode($version);
+    $file = __DIR__ . '/..' . rawurldecode($path);
+    // Do not change a missing image's URL on every request: that defeats caches.
+    if (!is_file($file)) return $url;
+    $fragment = '';
+    if (($position = strpos($url, '#')) !== false) {
+        $fragment = substr($url, $position);
+        $url = substr($url, 0, $position);
+    }
+    $version = rawurlencode((string)filemtime($file));
+    // PHP can read an uploaded file even when the host's static image handler
+    // cannot serve it. Keep stored paths portable; change only the rendered URL.
+    if (strpos($path, '/assets/uploads/') === 0) {
+        return '/media.php?path=' . rawurlencode(ltrim(rawurldecode($path), '/')) . '&v=' . $version . $fragment;
+    }
+    if (preg_match('/([?&])v=[^&]*/', $url)) {
+        $url = preg_replace('/([?&])v=[^&]*/', '${1}v=' . $version, $url);
+    } else {
+        $url .= (strpos($url, '?') === false ? '?' : '&') . 'v=' . $version;
+    }
+    return $url . $fragment;
 }
 
 function make_slug($value) {
@@ -908,28 +930,77 @@ function fetch_image($url) {
  * Safely handles image uploads with extension validation and unique renaming.
  * @param array $file The $_FILES element
  * @param string $target_subpath Subdirectory in assets/
+ * @param string|null $upload_error Specific failure reason, passed by reference
  * @return string|false Path to uploaded file relative to root, or false on failure.
  */
-function upload_image($file, $target_subpath = 'uploads/') {
-    if (empty($file) || !is_array($file) || empty($file['name']) || ($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) return false;
-
+function upload_image($file, $target_subpath = 'uploads/', &$upload_error = null) {
+    $upload_error = null;
+    if (!is_array($file) || empty($file['name'])) {
+        $upload_error = 'No image was received. Please select a file.';
+        return false;
+    }
+    $code = $file['error'] ?? UPLOAD_ERR_NO_FILE;
+    if ($code !== UPLOAD_ERR_OK) {
+        $errors = [
+            UPLOAD_ERR_INI_SIZE => 'The image exceeds the PHP upload_max_filesize limit (' . ini_get('upload_max_filesize') . '). Use a smaller image or ask your host to increase the limit.',
+            UPLOAD_ERR_FORM_SIZE => 'The image exceeds the form upload limit. Use a smaller image.',
+            UPLOAD_ERR_PARTIAL => 'Only part of the image reached the server. Please retry the upload.',
+            UPLOAD_ERR_NO_FILE => 'No image was received. Please select a file.',
+            UPLOAD_ERR_NO_TMP_DIR => 'The server upload temporary directory is missing. Ask your host to repair PHP upload_tmp_dir.',
+            UPLOAD_ERR_CANT_WRITE => 'PHP could not write the temporary upload. Ask your host to check disk space and temporary-directory permissions.',
+            UPLOAD_ERR_EXTENSION => 'A server PHP extension stopped the upload. Ask your host to check the PHP error log.'
+        ];
+        $upload_error = $errors[$code] ?? 'PHP reported an unknown upload error.';
+        return false;
+    }
     $allowed = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'ico'];
     $ext = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
-
-    if (!in_array($ext, $allowed)) return false;
-
-    $target_dir = __DIR__ . "/../assets/" . $target_subpath;
-    if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
-
-    // Unique filename to prevent overwrites and hide original name
-    $filename = bin2hex(random_bytes(8)) . "_" . time() . '.' . $ext;
-    $target_file = $target_dir . $filename;
-
-    if (move_uploaded_file($file['tmp_name'], $target_file)) {
-        return "/assets/" . $target_subpath . $filename;
+    if (!in_array($ext, $allowed, true)) {
+        $upload_error = 'The filename must end in .jpg, .jpeg, .png, .gif, .webp or .ico.';
+        return false;
     }
-
-    return false;
+    if (empty($file['tmp_name']) || !is_uploaded_file($file['tmp_name']) || !is_readable($file['tmp_name'])) {
+        $upload_error = 'The uploaded temporary file is missing or unreadable. Ask your host to check PHP upload storage.';
+        return false;
+    }
+    // Trust the recognized image format, not a potentially renamed extension.
+    // E.g. a PNG named photo.jpg is valid; store it as .png so browsers and
+    // static handlers agree about its format. Never accept executable formats.
+    $image_info = @getimagesize($file['tmp_name']);
+    $types = [
+        IMAGETYPE_JPEG => 'jpg', IMAGETYPE_PNG => 'png',
+        IMAGETYPE_GIF => 'gif', IMAGETYPE_WEBP => 'webp', IMAGETYPE_ICO => 'ico'
+    ];
+    if ($image_info === false || !isset($types[$image_info[2]])) {
+        $upload_error = 'The file contents are not a recognized JPG, PNG, GIF, WebP or ICO image. A .jpg filename alone does not convert a file. Open it in an image editor and export it as JPEG or PNG.';
+        return false;
+    }
+    $ext = $types[$image_info[2]];
+    $target_subpath = trim($target_subpath, '/') . '/';
+    $target_dir = __DIR__ . '/../assets/' . $target_subpath;
+    if (!is_dir($target_dir) && !@mkdir($target_dir, 0755, true) && !is_dir($target_dir)) {
+        error_log('Unable to create image upload directory: ' . $target_dir);
+        $upload_error = 'PHP could not create assets/' . $target_subpath . '. Ask your host to check directory ownership and permissions.';
+        return false;
+    }
+    if (!is_writable($target_dir)) {
+        $upload_error = 'The image upload directory is not writable by PHP. Ask your host to check assets/' . $target_subpath . ' ownership and permissions.';
+        return false;
+    }
+    $filename = bin2hex(random_bytes(8)) . '_' . time() . '.' . $ext;
+    $target_file = $target_dir . $filename;
+    if (!@move_uploaded_file($file['tmp_name'], $target_file)) {
+        error_log('Unable to move uploaded image into: ' . $target_dir);
+        $upload_error = 'PHP received the image but could not save it in assets/' . $target_subpath . '. Ask your host to check disk space, quota, permissions and open_basedir restrictions.';
+        return false;
+    }
+    if (!@chmod($target_file, 0644)) {
+        error_log('Unable to make uploaded image readable: ' . $target_file);
+        @unlink($target_file);
+        $upload_error = 'The image was saved but PHP could not set its read permissions. Ask your host to check file ownership and chmod restrictions.';
+        return false;
+    }
+    return '/assets/' . $target_subpath . $filename;
 }
 
 // Basic Markdown / HTML Renderer

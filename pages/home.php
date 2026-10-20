@@ -237,7 +237,7 @@ if ($category) {
                     <!-- Right: Image -->
                     <div class="col-lg-6">
                         <div class="rounded-3xl overflow-hidden border border-white/10 bg-white/5 shadow-2xl aspect-[16/10] relative">
-                            <img src="<?php echo htmlspecialchars($sec1_image); ?>" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($sec1_title); ?>">
+                            <img src="<?php echo htmlspecialchars(version_image_url($sec1_image)); ?>" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($sec1_title); ?>">
                         </div>
                     </div>
                 </div>
@@ -260,7 +260,7 @@ if ($category) {
                     <!-- Left: Image -->
                     <div class="col-lg-6">
                         <div class="rounded-3xl overflow-hidden border border-white/10 bg-white/5 shadow-2xl aspect-[16/10] relative">
-                            <img src="<?php echo htmlspecialchars($sec2_image); ?>" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($sec2_title); ?>">
+                            <img src="<?php echo htmlspecialchars(version_image_url($sec2_image)); ?>" class="w-full h-full object-cover" alt="<?php echo htmlspecialchars($sec2_title); ?>">
                         </div>
                     </div>
                     <!-- Right: Text Content -->

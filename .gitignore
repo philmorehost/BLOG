@@ -1,0 +1,4 @@
+node_modules/
+__pycache__/
+includes/config.php
+assets/uploads/

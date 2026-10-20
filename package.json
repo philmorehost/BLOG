@@ -1,5 +1,14 @@
 {
   "dependencies": {
     "playwright": "^1.58.2"
+  },
+  "devDependencies": {
+    "php-parser": "^3.7.0",
+    "tailwindcss": "^3.4.17"
+  },
+  "scripts": {
+    "build:css": "tailwindcss -i ./styles/tailwind.css -o ./assets/css/site.css --minify",
+    "test:frontend": "node tests/check_frontend.cjs",
+    "test:editor": "node --test tests/test_post_editor.cjs"
   }
 }
