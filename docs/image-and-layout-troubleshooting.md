@@ -29,3 +29,13 @@ For unresolved reports, provide the public page URL, broken image URL, response 
 - `python3 -m unittest discover -s tests -p 'test_image_upload.py' -v` — requires PHP CLI; verifies a real multipart upload, file permissions, static image delivery with a query string, and invalid-file rejection in an isolated temporary installation.
 
 These checks do not replace testing the deployed host's permissions, rewrites, CSP, and cache configuration.
+
+## Hosts that cannot deliver uploads as static files
+
+Local `/assets/uploads/...` URLs now render through `media.php?path=assets%2Fuploads%2F...&v=...`. Stored database paths and existing files are unchanged. The endpoint runs as the PHP user, bypasses static-file handling, and requires no database connection or session. It only serves recognized raster images within the real uploads directory; traversal, symlinks escaping uploads, source files and remote URLs are rejected.
+
+Deploy **`media.php`**, `includes/functions.php`, and `pages/home.php` together and clear page caches. The endpoint is a compatibility workaround, not a diagnosis of the host's static-file failure. If the image still fails, open the `media.php` URL directly and inspect its HTTP status. A 404 means PHP cannot locate/read the file or recognize it as a supported image; a 5xx needs the hosting PHP error log. Also check for WAF rules affecting the endpoint.
+
+For the reported file, the direct compatibility URL is:
+
+`https://expertwealthinfo.com/media.php?path=assets%2Fuploads%2Fb7e603771d59dc4e_1792485413.jpg`

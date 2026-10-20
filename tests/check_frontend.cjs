@@ -4,7 +4,8 @@ const fs = require('node:fs');
 const path = require('node:path');
 const Engine = require('php-parser');
 const parser = new Engine({parser: {php7: true}});
-let count = 0;
+parser.parseCode(fs.readFileSync('media.php', 'utf8'), 'media.php');
+let count = 1;
 for (const dir of ['includes', 'pages', 'admin', 'install']) {
   for (const file of fs.readdirSync(dir)) {
     if (!file.endsWith('.php')) continue;

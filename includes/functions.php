@@ -336,6 +336,11 @@ function version_image_url($url) {
         $url = substr($url, 0, $position);
     }
     $version = rawurlencode((string)filemtime($file));
+    // PHP can read an uploaded file even when the host's static image handler
+    // cannot serve it. Keep stored paths portable; change only the rendered URL.
+    if (strpos($path, '/assets/uploads/') === 0) {
+        return '/media.php?path=' . rawurlencode(ltrim(rawurldecode($path), '/')) . '&v=' . $version . $fragment;
+    }
     if (preg_match('/([?&])v=[^&]*/', $url)) {
         $url = preg_replace('/([?&])v=[^&]*/', '${1}v=' . $version, $url);
     } else {
