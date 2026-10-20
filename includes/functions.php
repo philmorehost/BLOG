@@ -919,13 +919,24 @@ function upload_image($file, $target_subpath = 'uploads/') {
     if (!in_array($ext, $allowed)) return false;
 
     $target_dir = __DIR__ . "/../assets/" . $target_subpath;
-    if (!is_dir($target_dir)) mkdir($target_dir, 0755, true);
+    if (!is_dir($target_dir) && !mkdir($target_dir, 0755, true) && !is_dir($target_dir)) {
+        error_log('Unable to create image upload directory: ' . $target_dir);
+        return false;
+    }
 
     // Unique filename to prevent overwrites and hide original name
     $filename = bin2hex(random_bytes(8)) . "_" . time() . '.' . $ext;
     $target_file = $target_dir . $filename;
 
     if (move_uploaded_file($file['tmp_name'], $target_file)) {
+        // Uploaded temporary files may retain mode 0600 after being moved.
+        // PHP and the static web server can run as different users, so the
+        // image must be readable by the web server (never make it writable).
+        if (!chmod($target_file, 0644)) {
+            error_log('Unable to make uploaded image readable: ' . $target_file);
+            unlink($target_file);
+            return false;
+        }
         return "/assets/" . $target_subpath . $filename;
     }
 
