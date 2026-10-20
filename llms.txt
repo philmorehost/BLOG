@@ -1,0 +1,19 @@
+# Football Intelligence
+
+> General News & Intelligence Network
+
+Website: http://localhost:8000
+Sitemap: http://localhost:8000/sitemap.xml
+
+## Key Pages
+- [Home](http://localhost:8000/): Latest news and featured reports
+- [Privacy Policy](http://localhost:8000/privacy-policy)
+- [About Us](http://localhost:8000/about-us)
+
+## Main Categories
+- [Football News](http://localhost:8000/category/football-news)
+- [Transfer News](http://localhost:8000/category/transfer-news)
+
+## Recent News Articles
+- [Test Article](http://localhost:8000/post/test-article) - Test excerpt
+- [AI Test Article Title](http://localhost:8000/post/ai-test-post-1788769693) - An excerpt for AI test

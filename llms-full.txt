@@ -1,0 +1,46 @@
+# Football Intelligence - Full LLM Context Digest
+
+> General News & Intelligence Network
+Canonical Domain: http://localhost:8000
+Generated Date: 2026-09-07 08:29:22 UTC
+
+---
+
+## Site Categories
+### Football News
+URL: http://localhost:8000/category/football-news
+
+### Transfer News
+URL: http://localhost:8000/category/transfer-news
+
+---
+
+## Complete Articles Index
+
+### Test Article
+- URL: http://localhost:8000/post/test-article
+- Category: Football News
+- Author: STAFF
+- Date: 2026-09-05 18:33:19
+
+#### Summary
+Test excerpt
+
+#### Full Content
+Test content
+
+---
+
+### AI Test Article Title
+- URL: http://localhost:8000/post/ai-test-post-1788769693
+- Category: Football News
+- Author: AI Tester
+- Date:
+
+#### Summary
+An excerpt for AI test
+
+#### Full Content
+Full body content for AI test article.
+
+---

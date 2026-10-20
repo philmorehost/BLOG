@@ -1,0 +1,9 @@
+User-agent: *
+Allow: /
+Disallow: /admin/
+Disallow: /install/
+
+Sitemap: https://goalzaza.com/sitemap.xml
+
+# SEO content signal
+# Powered by Football Intelligence Network
